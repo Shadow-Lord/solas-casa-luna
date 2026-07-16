@@ -1,10 +1,10 @@
 // v1.0.0 stable · build no.105
 /* ════════════════════════════════════════════════════════════════════
-   solas-casa-luna.js — Casa Luna Edition · by The Khan
+   solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
    customElements collision when both cards are installed)
 
-   • Config keys are 100% compatible with casa_luna.js / khan-skycard —
+   • Config keys are 100% compatible with solas_casa_luna.js / khan-skycard —
      existing YAML keeps working unchanged.
    • Layout: canonical SLOTS measured from template 60883 (1500×1000).
    • Backgrounds: /local/community/solas-casa-luna/sky/solas-casa-luna-<variant>.png
@@ -594,7 +594,7 @@ const NAV_VIEWS = [
    ════════════════════════════════════════════════════════════════════ */
 class CasaLuna extends HTMLElement {
 
-  /* —— config (keys preserved from casa_luna.js, plus additive keys) —— */
+  /* —— config (keys preserved from solas_casa_luna.js, plus additive keys) —— */
   static getStubConfig() {
     return {
       pv1_power: '',
@@ -663,7 +663,7 @@ class CasaLuna extends HTMLElement {
       thresh_load_warn: 70, thresh_load_critical: 90,
       thresh_endurance_low: 2, thresh_endurance_crit: 1,
       /* —— additive (new in solas-casa-luna) —— */
-      title: 'CASA LUNA',
+      title: 'SOLAS CASA LUNA',
       background_path: '/local/community/solas-casa-luna/sky',
       edge_dim_opacity: 100,
       history_charts: true,
@@ -1460,7 +1460,7 @@ class CasaLuna extends HTMLElement {
       <div style="display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:${VB_W}/${VB_H};
         background:#0a0e14;color:#ff6a6a;font-family:'Segoe UI',Roboto,system-ui,sans-serif;text-align:center;padding:24px">
         <div>
-          <div style="font-size:20px;font-weight:700;margin-bottom:8px">Casa Luna — attribution required</div>
+          <div style="font-size:20px;font-weight:700;margin-bottom:8px">Solas Casa Luna — attribution required</div>
           <div style="font-size:13px;color:#a8cae6">This card's author credit has been altered or removed. Restore it to continue using the card.</div>
         </div>
       </div>`;
@@ -1497,7 +1497,7 @@ class CasaLuna extends HTMLElement {
           background:linear-gradient(180deg,#ffffff 0%,#dce5ef 30%,#8ba3bc 50%,#b0c4de 75%,#556e89 100%);
           -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
           text-shadow:none;
-          filter:drop-shadow(0 0 18px rgba(58,123,255,0.55)) drop-shadow(0 0 6px rgba(128,179,255,0.7))">${esc(c.title || 'CASA LUNA')}</div>
+          filter:drop-shadow(0 0 18px rgba(58,123,255,0.55)) drop-shadow(0 0 6px rgba(128,179,255,0.7))">${esc(c.title || 'SOLAS CASA LUNA')}</div>
         <div id="hSubtitle" style="margin-top:5px;line-height:1;font-family:'Bahnschrift','Arial Narrow','Segoe UI',sans-serif;font-size:11.2px;font-weight:400;
           letter-spacing:4.8px;color:#a8cae6;text-align:center">ENERGY • AUTOMATION • SECURITY • by the Khan</div>
       </div>
@@ -5198,7 +5198,7 @@ class CasaLunaEditor extends HTMLElement {
     rawAppend(advBanner);
 
     shell.appendChild(section('general', '⚙️', 'General', [
-      textField('title', 'Title', 'CASA LUNA'),
+      textField('title', 'Title', 'SOLAS CASA LUNA'),
       textField('inverter_name', 'Inverter Name', 'e.g. My Inverter'),
       divider(),
       capGroup('Battery Capacity', 'battery_cap_unit', 'battery_full_ah', 'battery_full_wh'),
@@ -5630,8 +5630,8 @@ if (!customElements.get('solas-casa-luna-editor')) customElements.define('solas-
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'solas-casa-luna',
-  name: 'Solar Casa Luna',
-  description: 'Casa Luna by The Khan — energy dashboard — scenic background, live energy flows, clickable navigation.',
+  name: 'Solas Casa Luna',
+  description: 'Solas Casa Luna by The Khan — energy dashboard — scenic background, live energy flows, clickable navigation.',
   preview: false,
 });
 console.info(`%c SOLAS-CASA-LUNA %c v${VERSION} `, 'background:#0a2a55;color:#7fd4ff;font-weight:700', 'background:#123;color:#9ae63c');
