@@ -1,13 +1,13 @@
 // v1.0.0 stable · build no.105
 /* ════════════════════════════════════════════════════════════════════
-   casa-luna.js — Casa Luna Edition · by The Khan
-   Custom element: <casa-luna>  (renamed from khan-skycard to avoid
+   solas-casa-luna.js — Casa Luna Edition · by The Khan
+   Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
    customElements collision when both cards are installed)
 
    • Config keys are 100% compatible with casa_luna.js / khan-skycard —
      existing YAML keeps working unchanged.
    • Layout: canonical SLOTS measured from template 60883 (1500×1000).
-   • Backgrounds: /local/community/casa-luna/sky/casa-luna-<variant>.png
+   • Backgrounds: /local/community/solas-casa-luna/sky/solas-casa-luna-<variant>.png
      (same files & variant logic as before; path configurable).
    ════════════════════════════════════════════════════════════════════ */
 
