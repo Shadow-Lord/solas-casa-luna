@@ -1,4 +1,4 @@
-// v2.0.1 stable · build no.101
+// v2.0.2 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.1';
+const VERSION = '2.0.2';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -663,7 +663,7 @@ class CasaLuna extends HTMLElement {
       thresh_load_warn: 70, thresh_load_critical: 90,
       thresh_endurance_low: 2, thresh_endurance_crit: 1,
       /* —— additive (new in solas-casa-luna) —— */
-      title: 'SOLAS CASA LUNA',
+      title: 'CASA LUNA',
       background_path: '/local/community/solas-casa-luna/sky',
       edge_dim_opacity: 100,
       history_charts: true,
@@ -1497,7 +1497,7 @@ class CasaLuna extends HTMLElement {
           background:linear-gradient(180deg,#ffffff 0%,#dce5ef 30%,#8ba3bc 50%,#b0c4de 75%,#556e89 100%);
           -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
           text-shadow:none;
-          filter:drop-shadow(0 0 18px rgba(58,123,255,0.55)) drop-shadow(0 0 6px rgba(128,179,255,0.7))">${esc(c.title || 'SOLAS CASA LUNA')}</div>
+          filter:drop-shadow(0 0 18px rgba(58,123,255,0.55)) drop-shadow(0 0 6px rgba(128,179,255,0.7))">${esc(c.title || 'CASA LUNA')}</div>
         <div id="hSubtitle" style="margin-top:5px;line-height:1;font-family:'Bahnschrift','Arial Narrow','Segoe UI',sans-serif;font-size:11.2px;font-weight:400;
           letter-spacing:4.8px;color:#a8cae6;text-align:center">ENERGY • AUTOMATION • SECURITY • by the Khan</div>
       </div>
