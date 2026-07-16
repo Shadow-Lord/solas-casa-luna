@@ -1,2 +1,2 @@
 # casa
-A complete solas in vertersolar, energy, automation, security dashboard 
+A complete solas solar inverter, energy, automation, security dashboard 
