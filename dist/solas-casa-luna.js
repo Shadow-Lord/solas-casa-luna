@@ -1,4 +1,4 @@
-// v2.0.4 stable · build no.101
+// v2.0.5 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.4';
+const VERSION = '2.0.5';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -612,10 +612,10 @@ class CasaLuna extends HTMLElement {
       inverter_error: '',
       today_batt_chg: 'sensor.solis_inverter_103_solis_daily_energy_charged',
       today_load: 'sensor.solis_inverter_103_solis_daily_grid_energy_used',
-      battery_soc: '',
-      battery_power: '',
-      battery_current: '',
-      battery_voltage: '',
+      battery_soc: 'sensor.solis_inverter_103_solis_remaining_battery_capacity',
+      battery_power: 'sensor.solis_inverter_103_solis_battery_power',
+      battery_current: 'sensor.solis_inverter_103_solis_battery_current',
+      battery_voltage: 'sensor.solis_inverter_103_solis_battery_voltage',
       label_cell_temp: 'CELL TEMP',
       label_load: 'LOAD',
       label_cell_volt: 'CELL VOLT',
@@ -624,12 +624,12 @@ class CasaLuna extends HTMLElement {
       battery_mos: '',
       battery_min_cell: '',
       battery_max_cell: '',
-      inv_temp: 'sensor.solis_inverter_103_solis_temperature',
-      batt_dis: 'sensor.solis_inverter_103_solis_daily_energy_discharged',
-      battery2_soc: 'sensor.solis_inverter_103_solis_remaining_battery_capacity',
-      battery2_power: 'sensor.solis_inverter_103_solis_battery_power',
-      battery2_current: 'sensor.solis_inverter_103_solis_battery_current',
-      battery2_voltage: 'sensor.solis_inverter_103_solis_battery_voltage',
+      inv_temp: '',
+      batt_dis: '',
+      battery2_soc: '',
+      battery2_power: '',
+      battery2_current: '',
+      battery2_voltage: '',
       battery2_mos: '',
       battery_full_ah: 0,
       battery_full_wh: 20.48,
