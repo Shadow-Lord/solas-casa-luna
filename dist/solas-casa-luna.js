@@ -637,7 +637,7 @@ class CasaLuna extends HTMLElement {
       sun: 'sun.sun',
       weather_entity: 'weather.home',
       weather_temp_entity: '', weather_wind_entity: '', weather_dir_entity: '',
-      inverter_name: '',
+      inverter_name: 'Solas 5',
       label_bms_temp: 'BMS TEMP', label_endurance: 'ENDURANCE',
       label_batt_current: 'BATT CURRENT', label_capacity: 'CAPACITY',
       pv1_voltage: '',
@@ -662,9 +662,9 @@ class CasaLuna extends HTMLElement {
       thresh_soc_low: 25, thresh_soc_critical: 15,
       thresh_load_warn: 70, thresh_load_critical: 90,
       thresh_endurance_low: 2, thresh_endurance_crit: 1,
-      /* —— additive (new in casa-luna) —— */
+      /* —— additive (new in solas-casa-luna) —— */
       title: 'CASA LUNA',
-      background_path: '/local/community/casa-luna/sky',
+      background_path: '/local/community/solas-casa-luna/sky',
       edge_dim_opacity: 100,
       history_charts: true,
       _show_advanced: false,
@@ -763,7 +763,7 @@ class CasaLuna extends HTMLElement {
     };
   }
 
-  static getConfigElement() { return document.createElement('casa-luna-editor'); }
+  static getConfigElement() { return document.createElement('solas-casa-luna-editor'); }
   /* ═══════════════════════ LIFECYCLE & HASS ═══════════════════════ */
   getCardSize() { return 8; }
 
@@ -2769,10 +2769,10 @@ class CasaLuna extends HTMLElement {
     const end = (e) => {
       if (!this._panelBusy) return;
       this._panelBusy = false;
-      try { track.releasePointerCapture(e.pointerId); } catch (e2) { console.debug('casa-luna: releasePointerCapture no-op', e2); }
+      try { track.releasePointerCapture(e.pointerId); } catch (e2) { console.debug('solas-casa-luna: releasePointerCapture no-op', e2); }
       if (v != null) commit(v);
     };
-    track.addEventListener('pointerdown', e => { this._panelBusy = true; v = fromX(e.clientX); try { track.setPointerCapture(e.pointerId); } catch (e2) { console.debug('casa-luna: setPointerCapture no-op', e2); } });
+    track.addEventListener('pointerdown', e => { this._panelBusy = true; v = fromX(e.clientX); try { track.setPointerCapture(e.pointerId); } catch (e2) { console.debug('solas-casa-luna: setPointerCapture no-op', e2); } });
     track.addEventListener('pointermove', e => { if (this._panelBusy) v = fromX(e.clientX); });
     track.addEventListener('pointerup', end);
     track.addEventListener('pointercancel', () => { this._panelBusy = false; });
@@ -3484,7 +3484,7 @@ class CasaLuna extends HTMLElement {
     try {
       const all = await Promise.all(cals.map(c => this._hass.callApi('GET', `calendars/${encodeURIComponent(c)}?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`).catch(() => [])));
       events = all.flat().filter(Boolean);
-    } catch (e2) { console.warn('casa-luna: calendar fetch failed', e2); events = []; }
+    } catch (e2) { console.warn('solas-casa-luna: calendar fetch failed', e2); events = []; }
     if (this._calMonth.getMonth() !== month || this._calMonth.getFullYear() !== year) return;  // user navigated away
     const byDay = {};
     events.forEach(e => {
@@ -4140,7 +4140,7 @@ class CasaLuna extends HTMLElement {
     }
     /* Endurance (khan logic): driven by battery power, not house load.
        Discharging → time to empty; Charging → ETA to full (cyan, labeled ETA).
-       casa-luna sign: bP>0 discharging, bP<0 charging (already invert-normalized). */
+       solas-casa-luna sign: bP>0 discharging, bP<0 charging (already invert-normalized). */
     let endHours = NaN, endText = '--', isETA = false;
     if (c._show_battery2) {
       const soc1 = this._num(c.battery_soc, NaN), soc2 = this._num(c.battery2_soc, NaN);
@@ -5209,7 +5209,7 @@ class CasaLunaEditor extends HTMLElement {
       divider(),
       numberField('lower_section_offset', 'Flow diagram vertical offset', -80, 80, 1, 'SVG units (− = up)'),
       divider(),
-      textField('background_path', 'Background Image Path', '/local/community/casa-luna/sky'),
+      textField('background_path', 'Background Image Path', '/local/community/solas-casa-luna/sky'),
     ]));
 
     shell.appendChild(section('toggles', '🎚️', 'Toggles', [
@@ -5625,14 +5625,14 @@ class CasaLunaEditor extends HTMLElement {
 }
 
 /* ── register (collision-safe) ── */
-if (!customElements.get('casa-luna')) customElements.define('casa-luna', CasaLuna);
-if (!customElements.get('casa-luna-editor')) customElements.define('casa-luna-editor', CasaLunaEditor);
+if (!customElements.get('solas-casa-luna')) customElements.define('solas-casa-luna', CasaLuna);
+if (!customElements.get('solas-casa-luna-editor')) customElements.define('solas-casa-luna-editor', CasaLunaEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: 'casa-luna',
-  name: 'Casa Luna',
+  type: 'solas-casa-luna',
+  name: 'Solar Casa Luna',
   description: 'Casa Luna by The Khan — energy dashboard — scenic background, live energy flows, clickable navigation.',
   preview: false,
 });
-console.info(`%c CASA-LUNA %c v${VERSION} `, 'background:#0a2a55;color:#7fd4ff;font-weight:700', 'background:#123;color:#9ae63c');
+console.info(`%c SOLAS-CASA-LUNA %c v${VERSION} `, 'background:#0a2a55;color:#7fd4ff;font-weight:700', 'background:#123;color:#9ae63c');
 })();
