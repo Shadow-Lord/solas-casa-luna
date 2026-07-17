@@ -1,4 +1,4 @@
-// v2.0.14 stable · build no.101
+// v2.0.15 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.14';
+const VERSION = '2.0.15';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3234,7 +3234,7 @@ class CasaLuna extends HTMLElement {
         this._wTile('💾', 'CPU', c.sys_cpu || '', '%')
         + this._wTile('🧠', 'Memory', c.sys_memory || '', '%')
         + this._wTile('💿', 'Disk', c.sys_disk || '', '%')
-        + this._wTile('⏱️', 'Uptime', c.sys_uptime || '', ' '));
+        + this._wTile('⏱️', 'Uptime', c.sys_uptime || '', 'week'));
   }
 
 
