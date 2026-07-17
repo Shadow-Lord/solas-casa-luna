@@ -1,4 +1,4 @@
-// v2.0.9 stable · build no.101
+// v2.0.10 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.9';
+const VERSION = '2.0.10';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3217,8 +3217,18 @@ class CasaLuna extends HTMLElement {
   /* ── SYSTEM view: server, ESP board, device status, temps ── */
   _viewSystem() {
     const c = this.config;
-    console.info("Casa Luna sys_uptime raw value:", c.sys_uptime);
 
+// Resolve uptime entity state
+   let uptime = '';
+   if (c.sys_uptime) {
+     const obj = this._stateObj(c.sys_uptime);
+     if (obj && obj.state !== undefined) {
+       uptime = obj.state;
+     }
+   }
+
+   // Debug
+   console.info("Casa Luna resolved uptime state:", uptime);
    // Format uptime if numeric
    let uptime = c.sys_uptime;
    if (!isNaN(uptime)) {
