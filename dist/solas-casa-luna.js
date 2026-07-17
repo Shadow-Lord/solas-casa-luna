@@ -1,4 +1,4 @@
-// v2.0.7 stable · build no.101
+// v2.0.8 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.7';
+const VERSION = '2.0.8';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3217,6 +3217,17 @@ class CasaLuna extends HTMLElement {
   /* ── SYSTEM view: server, ESP board, device status, temps ── */
   _viewSystem() {
     const c = this.config;
+
+   // Format uptime if numeric
+   let uptime = c.sys_uptime;
+   if (!isNaN(uptime)) {
+     uptime = parseInt(uptime, 10);
+     const days = Math.floor(uptime / 86400);
+     const hours = Math.floor((uptime % 86400) / 3600);
+     const minutes = Math.floor((uptime % 3600) / 60);
+     uptime = `${days}d ${hours}h ${minutes}m`;
+   }
+
     /* same inheritance pattern as _viewBattery/_viewEnergy */
     const bf = (sysKey, mainKey) => (c[sysKey] && this._stateObj(c[sysKey])) ? c[sysKey] : (c[mainKey] || '');
     return this._wHead('Inverter & ESP')
@@ -3234,7 +3245,7 @@ class CasaLuna extends HTMLElement {
         this._wTile('💾', 'CPU', c.sys_cpu || '', '%')
         + this._wTile('🧠', 'Memory', c.sys_memory || '', '%')
         + this._wTile('💿', 'Disk', c.sys_disk || '', '%')
-        + this._wTile('⏱️', 'Uptime', c.sys_uptime || ''));
+        + this._wTile('⏱️', 'Uptime', uptime || ''));
   }
 
 
