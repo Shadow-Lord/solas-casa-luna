@@ -1,4 +1,4 @@
-// v2.0.12 stable · build no.101
+// v2.0.13 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.12';
+const VERSION = '2.0.13';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3218,7 +3218,7 @@ class CasaLuna extends HTMLElement {
   _viewSystem() {
     const c = this.config;
 
-// Resolve uptime entity state
+   // Resolve uptime entity state
    let uptime = '';
    if (c.sys_uptime) {
      const obj = this._stateObj(c.sys_uptime);
@@ -3226,9 +3226,6 @@ class CasaLuna extends HTMLElement {
        uptime = obj.state;
      }
    }
-
-   // Debug
-   console.info("Casa Luna resolved uptime state:", uptime);
 
    // If uptime is a timestamp, convert it to seconds
    if (typeof uptime === 'string' && uptime.includes('T')) {
@@ -3265,7 +3262,7 @@ class CasaLuna extends HTMLElement {
         this._wTile('💾', 'CPU', c.sys_cpu || '', '%')
         + this._wTile('🧠', 'Memory', c.sys_memory || '', '%')
         + this._wTile('💿', 'Disk', c.sys_disk || '', '%')
-        + this._wTile('⏱️', 'Uptime', uptime || ''));
+        + this._wTile('⏱️', 'Uptime', uptime || '', ' '));
   }
 
 
