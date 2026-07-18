@@ -1,4 +1,4 @@
-// v2.0.15 stable · build no.101
+// v2.0.16 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.15';
+const VERSION = '2.0.16';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3219,6 +3219,11 @@ class CasaLuna extends HTMLElement {
     const c = this.config;
     /* same inheritance pattern as _viewBattery/_viewEnergy */
     const bf = (sysKey, mainKey) => (c[sysKey] && this._stateObj(c[sysKey])) ? c[sysKey] : (c[mainKey] || '');
+  // Debug exact resolution for uptime (run at render time)
+  console.info('Casa Luna literal c.sys_uptime:', c.sys_uptime);
+  console.info('Casa Luna _st("sensor.system_monitor_uptime"):', this._st('sensor.system_monitor_uptime'));
+  console.info('Casa Luna _stateObj(c.sys_uptime):', this._stateObj(c.sys_uptime));
+  console.info('Casa Luna raw uptime value (after _st):', this._st(c.sys_uptime));
     return this._wHead('Inverter & ESP')
       + this._wGrid(4,
         this._wTile('🌡️', 'Inv Temp', bf('sys_inv_temp', 'inv_temp'), '°C')
@@ -3234,7 +3239,7 @@ class CasaLuna extends HTMLElement {
         this._wTile('💾', 'CPU', c.sys_cpu || '', '%')
         + this._wTile('🧠', 'Memory', c.sys_memory || '', '%')
         + this._wTile('💿', 'Disk', c.sys_disk || '', '%')
-        + this._wTile('⏱️', 'Uptime', c.sys_uptime || '', 'week'));
+        + this._wTile('⏱️', 'Uptime', c.sys_uptime || '', ' '));
   }
 
 
