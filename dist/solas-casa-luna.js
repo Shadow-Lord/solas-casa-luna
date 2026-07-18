@@ -1,4 +1,4 @@
-// v2.0.18 stable · build no.101
+// v2.0.19 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.18';
+const VERSION = '2.0.19';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3264,7 +3264,7 @@ class CasaLuna extends HTMLElement {
         + this._wTile('💨', 'Gas', c.sys_gas || '', 'ppm')
         + this._wTile('💡', 'Lux', c.sys_lux || '', 'lx')
         + this._wTile('📶', 'WiFi', c.sys_wifi || '', 'dBm')
-        + this._wTile('🔌', 'Grid', bf('sys_grid_meter', 'grid_active_power'), 'Wh'))
+        + this._wTile('🔌', 'Grid', bf('sys_grid_meter', 'grid_active_power'), 'W'))
       + this._wHead('Server')
       + this._wGrid(4,
         this._wTile('💾', 'CPU', c.sys_cpu || '', '%')
@@ -4752,25 +4752,52 @@ class CasaLuna extends HTMLElement {
   /* header weather art (simple dynamic set) */
   _drawWeatherArt(cond) {
     const g = this._q('#hWxArt'); if (!g) return;
-    const c = (cond || '').toLowerCase();
-    let art = '';
-    const sun = `<circle cx="14" cy="-6" r="15" fill="none" stroke="#ffd24a" stroke-width="3"/>
-      <g stroke="#ffd24a" stroke-width="2.4" stroke-linecap="round">
-        <line x1="14" y1="-29" x2="14" y2="-24"/><line x1="-9" y1="-6" x2="-4" y2="-6"/><line x1="32" y1="-6" x2="37" y2="-6"/></g>`;
-    const cloud = `<ellipse cx="2" cy="13" rx="32" ry="17" fill="#dde9fa"/><ellipse cx="24" cy="10" rx="18" ry="13" fill="#c3d4ec"/>`;
-    const rain = `<g stroke="#6db7ff" stroke-width="2.4" stroke-linecap="round">
+
+    // sanitize and normalize incoming condition string
+    let raw = String(cond || '');
+    // remove control chars and most punctuation/emoji, keep letters, numbers, spaces and hyphens
+    raw = raw.replace(/[^\p{L}\p{N}\s-]/gu, '');
+    raw = raw.replace(/\s+/g, ' ').trim();
+    const label = raw; // keep a cleaned label for tooltip
+    const c = raw.toLowerCase();
+
+    // SVG parts
+    const sun = `<g transform="translate(6,-6)">
+      <circle cx="0" cy="0" r="10" fill="#ffd24a"/>
+      <g stroke="#ffd24a" stroke-width="2" stroke-linecap="round">
+        <line x1="0" y1="-16" x2="0" y2="-10"/><line x1="-14" y1="0" x2="-8" y2="0"/><line x1="14" y1="0" x2="20" y2="0"/>
+      </g></g>`;
+
+    // cloud drawn as a single silhouette (two ellipses merged visually)
+    const cloud = `<g transform="translate(6,6)">
+      <ellipse cx="0" cy="6" rx="28" ry="14" fill="#dde9fa"/>
+      <ellipse cx="22" cy="3" rx="16" ry="11" fill="#c3d4ec"/>
+    </g>`;
+
+    const rain = `<g stroke="#6db7ff" stroke-width="2.4" stroke-linecap="round" transform="translate(6,6)">
       <line x1="-8" y1="28" x2="-12" y2="38"/><line x1="4" y1="28" x2="0" y2="38"/><line x1="16" y1="28" x2="12" y2="38"/></g>`;
-    const snow = `<g fill="#eaf4ff"><circle cx="-8" cy="32" r="2.4"/><circle cx="6" cy="35" r="2.4"/><circle cx="18" cy="31" r="2.4"/></g>`;
-    const bolt = `<path d="M6 24 L-2 38 H4 L0 50 L12 36 H5 Z" fill="#ffd24a"/>`;
-    if (c.includes('thunder')) art = cloud + bolt;
-    else if (c.includes('snow') || c.includes('sleet')) art = cloud + snow;
-    else if (c.includes('rain') || c.includes('drizzle') || c.includes('pour')) art = cloud + rain;
-    else if (c.includes('partly')) art = sun + cloud;
-    else if (c.includes('cloud') || c.includes('overcast') || c.includes('fog')) art = cloud;
-    else if (c.includes('night')) art = `<path d="M20 -16 a14 14 0 1 0 4 26 a11 11 0 0 1 -4 -26 Z" fill="#e8efff"/>`;
-    else art = sun;
+    const snow = `<g fill="#eaf4ff" transform="translate(6,6)"><circle cx="-8" cy="32" r="2.4"/><circle cx="6" cy="35" r="2.4"/><circle cx="18" cy="31" r="2.4"/></g>`;
+    const bolt = `<g transform="translate(6,6)"><path d="M6 24 L-2 38 H4 L0 50 L12 36 H5 Z" fill="#ffd24a"/></g>`;
+
+    // choose art based on normalized condition
+    let art = '';
+    if (c.includes('thunder') || c.includes('storm')) art = cloud + bolt;
+    else if (c.includes('sleet') || c.includes('snow')) art = cloud + snow;
+    else if (c.includes('rain') || c.includes('drizzle') || c.includes('shower') || c.includes('pour')) art = cloud + rain;
+    else if (c.includes('partly') || c.includes('partly-cloudy') || c.includes('partly cloudy')) art = cloud + sun; // sun drawn after cloud so it appears in front
+    else if (c.includes('cloud') || c.includes('overcast') || c.includes('fog') || c.includes('mist')) art = cloud;
+    else if (c.includes('night') || c.includes('clear-night')) {
+      art = `<g transform="translate(6,-6)"><path d="M20 -16 a14 14 0 1 0 4 26 a11 11 0 0 1 -4 -26 Z" fill="#e8efff"/></g>`;
+    } else {
+      art = sun;
+    }
+
     const wrapped = `<svg width="50" height="60" viewBox="-10 -30 60 70" style="display:block;overflow:visible">${art}</svg>`;
     if (g._last !== art) { g.innerHTML = wrapped; g._last = art; }
+
+    // set a tooltip/title using the cleaned label
+    if (label) g.setAttribute('title', label);
+    else g.removeAttribute('title');
   }
 
   /* sparkline + chart from HA history API (cached, throttled) */
