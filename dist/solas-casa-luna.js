@@ -1,4 +1,4 @@
-// v2.0.17 stable · build no.101
+// v2.0.18 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.17';
+const VERSION = '2.0.18';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3252,14 +3252,6 @@ class CasaLuna extends HTMLElement {
     const c = this.config;
     /* same inheritance pattern as _viewBattery/_viewEnergy */
     const bf = (sysKey, mainKey) => (c[sysKey] && this._stateObj(c[sysKey])) ? c[sysKey] : (c[mainKey] || '');
-
-    // Optional: keep for debugging, remove when done
-    // console.info('Casa Luna literal c.sys_uptime:', c.sys_uptime);
-    // console.info('Casa Luna _st("sensor.system_monitor_uptime"):', this._st('sensor.system_monitor_uptime'));
-    // console.info('Casa Luna _stateObj(c.sys_uptime):', this._stateObj(c.sys_uptime));
-    // console.info('Casa Luna raw uptime value (after _st):', this._st(c.sys_uptime));
-
-    // compute formatted uptime string from the sensor state
     const rawState = this._st(c.sys_uptime);
     const uptimeStr = this._formatUptimeFromState(rawState);
 
@@ -3272,7 +3264,7 @@ class CasaLuna extends HTMLElement {
         + this._wTile('💨', 'Gas', c.sys_gas || '', 'ppm')
         + this._wTile('💡', 'Lux', c.sys_lux || '', 'lx')
         + this._wTile('📶', 'WiFi', c.sys_wifi || '', 'dBm')
-        + this._wTile('🔌', 'Grid kWh', bf('sys_grid_meter', 'grid_active_power')))
+        + this._wTile('🔌', 'Grid', bf('sys_grid_meter', 'grid_active_power'), 'Wh'))
       + this._wHead('Server')
       + this._wGrid(4,
         this._wTile('💾', 'CPU', c.sys_cpu || '', '%')
