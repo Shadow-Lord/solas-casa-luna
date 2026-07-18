@@ -1,4 +1,4 @@
-// v2.0.16 stable · build no.101
+// v2.0.17 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.16';
+const VERSION = '2.0.17';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2480,6 +2480,39 @@ class CasaLuna extends HTMLElement {
       <div class="mv${bad ? ' off' : ''}" ${has ? `data-val="${esc(entId)}" data-unit="${esc(unit)}"` : ''}>${esc(val)}</div></div>`;
   }
 
+  // format seconds or ISO timestamp into "Xd Yh Zm" or return '--'
+  _formatUptimeFromState(state) {
+    if (state == null || state === '' || /^(unavailable|unknown)$/i.test(state)) return '--';
+    const maybeNum = Number(state);
+    if (Number.isFinite(maybeNum)) {
+      return this._formatSecondsToDHm(Math.floor(maybeNum));
+    }
+    if (typeof state === 'string' && state.includes('T')) {
+      const boot = new Date(state);
+      if (isNaN(boot.getTime())) return '--';
+      const diffSec = Math.floor((Date.now() - boot.getTime()) / 1000);
+      return this._formatSecondsToDHm(diffSec);
+    }
+    return String(state);
+  }
+
+  // helper to convert seconds -> "Xd Yh Zm"
+  _formatSecondsToDHm(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return '--';
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+
+  // minimal raw tile renderer (keeps same markup as _wTile but uses a literal value)
+  _wTileRaw(icon, label, rawValue, unit = '') {
+    const val = rawValue == null || rawValue === '' ? '--' : `${rawValue}${unit ? ' ' + unit : ''}`;
+    return `<div class="pw-mtile" style="cursor:default">
+      <div class="mi">${icon}</div><div class="ml">${esc(label)}</div>
+      <div class="mv">${esc(val)}</div></div>`;
+  }
+
   /* compact toggle TILE: icon / label / switch stacked */
   _wToggleTile(icon, label, entId) {
     const has = !!entId;
@@ -3219,11 +3252,17 @@ class CasaLuna extends HTMLElement {
     const c = this.config;
     /* same inheritance pattern as _viewBattery/_viewEnergy */
     const bf = (sysKey, mainKey) => (c[sysKey] && this._stateObj(c[sysKey])) ? c[sysKey] : (c[mainKey] || '');
-  // Debug exact resolution for uptime (run at render time)
-  console.info('Casa Luna literal c.sys_uptime:', c.sys_uptime);
-  console.info('Casa Luna _st("sensor.system_monitor_uptime"):', this._st('sensor.system_monitor_uptime'));
-  console.info('Casa Luna _stateObj(c.sys_uptime):', this._stateObj(c.sys_uptime));
-  console.info('Casa Luna raw uptime value (after _st):', this._st(c.sys_uptime));
+
+    // Optional: keep for debugging, remove when done
+    // console.info('Casa Luna literal c.sys_uptime:', c.sys_uptime);
+    // console.info('Casa Luna _st("sensor.system_monitor_uptime"):', this._st('sensor.system_monitor_uptime'));
+    // console.info('Casa Luna _stateObj(c.sys_uptime):', this._stateObj(c.sys_uptime));
+    // console.info('Casa Luna raw uptime value (after _st):', this._st(c.sys_uptime));
+
+    // compute formatted uptime string from the sensor state
+    const rawState = this._st(c.sys_uptime);
+    const uptimeStr = this._formatUptimeFromState(rawState);
+
     return this._wHead('Inverter & ESP')
       + this._wGrid(4,
         this._wTile('🌡️', 'Inv Temp', bf('sys_inv_temp', 'inv_temp'), '°C')
@@ -3239,7 +3278,8 @@ class CasaLuna extends HTMLElement {
         this._wTile('💾', 'CPU', c.sys_cpu || '', '%')
         + this._wTile('🧠', 'Memory', c.sys_memory || '', '%')
         + this._wTile('💿', 'Disk', c.sys_disk || '', '%')
-        + this._wTile('⏱️', 'Uptime', c.sys_uptime || '', ' '));
+        // render the preformatted uptime string using the raw tile renderer
+        + this._wTileRaw('⏱️', 'Uptime', uptimeStr, ''));
   }
 
 
