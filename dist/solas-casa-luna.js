@@ -1,4 +1,4 @@
-// v2.0.25 stable · build no.101
+// v2.0.26 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.25';
+const VERSION = '2.0.26';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1034,7 +1034,7 @@ class CasaLuna extends HTMLElement {
       0: '#9aa6b2', // Standby / neutral
       1: '#f5a623', // Self Test / warning
       2: '#22c3ff', // Normal / info
-      3: '#39d358', // Online / green
+      3: '#39d353', // Online / green
       4: '#ff4d4f', // Fault / red
       5: '#9aa6b2', // Shutdown / neutral
       6: '#9aa6b2', // Grid Off / neutral
@@ -1588,6 +1588,18 @@ _getInverterStateDisplay(c) {
 
 // compute display once, early
 const invDisplay = this._getInverterStateDisplay(c);
+
+// DEBUG: log the resolved display and source entities
+console.debug('[CasaLuna] invDisplay', {
+  entity_config: c.inverter_state,
+  solar_config: c.inverter_state_solar,
+  raw: invDisplay?.raw,
+  code: invDisplay?.code,
+  label: invDisplay?.label,
+  color: invDisplay?.color,
+  time: new Date().toISOString()
+});
+
 // expose on config for templates or later DOM updates
 c.inverter_state_display = invDisplay.label;
 c.inverter_state_display_color = invDisplay.color;
@@ -2353,6 +2365,24 @@ c.inverter_state_display_raw = invDisplay.raw;
     this._built = true;
     this._applyTheme();
     this._setBackground(true);
+    
+// TEMP DEBUG: observe #invState for later overwrites and capture a short stack
+(() => {
+  const el = document.getElementById('invState');
+  if (!el) return;
+  const mo = new MutationObserver((records) => {
+    records.forEach(r => {
+      console.debug('[CasaLuna] invState mutated', {
+        oldValue: r.oldValue,
+        newValue: el.textContent,
+        time: new Date().toISOString(),
+        stack: (new Error()).stack.split('\n').slice(2,6).join('\n')
+      });
+    });
+  });
+  mo.observe(el, { childList: true, subtree: true, characterData: true, characterDataOldValue: true });
+})();
+
   }
 
   /* wire all DOM interactions after innerHTML is set (called once from _build) */
