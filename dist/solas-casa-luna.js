@@ -1,4 +1,4 @@
-// v2.0.27 stable · build no.101
+// v2.0.28 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.27';
+const VERSION = '2.0.28';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2366,34 +2366,49 @@ c.inverter_state_display_raw = invDisplay.raw;
     this._applyTheme();
     this._setBackground(true);
     
-// TEMP DEBUG: wait for #invState then observe mutations and log a short stack
-(() => {
-  const waitForEl = (sel, timeout = 5000) => new Promise((resolve) => {
-    const el = document.querySelector(sel);
-    if (el) return resolve(el);
-    const to = setTimeout(() => { mo && mo.disconnect(); resolve(null); }, timeout);
+// deep query that walks into shadow roots
+function queryDeep(selector, root = document) {
+  const el = root.querySelector(selector);
+  if (el) return el;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null, false);
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node.shadowRoot) {
+      const found = queryDeep(selector, node.shadowRoot);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// wait for element then observe
+(async () => {
+  const waitFor = (sel, timeout = 10000) => new Promise(resolve => {
+    const found = queryDeep(sel);
+    if (found) return resolve(found);
     const mo = new MutationObserver(() => {
-      const e = document.querySelector(sel);
-      if (e) { clearTimeout(to); mo.disconnect(); resolve(e); }
+      const f = queryDeep(sel);
+      if (f) { mo.disconnect(); resolve(f); }
     });
-    mo.observe(document.body, { childList: true, subtree: true });
+    mo.observe(document, { childList: true, subtree: true });
+    setTimeout(() => { mo.disconnect(); resolve(null); }, timeout);
   });
 
-  waitForEl('#invState', 10000).then(el => {
-    if (!el) { console.debug('[CasaLuna] invState not found after wait'); return; }
-    console.debug('[CasaLuna] invState observer attached', { time: new Date().toISOString() });
-    const mo = new MutationObserver((records) => {
-      records.forEach(r => {
-        console.debug('[CasaLuna] invState mutated', {
-          oldValue: r.oldValue,
-          newValue: el.textContent,
-          time: new Date().toISOString(),
-          stack: (new Error()).stack.split('\n').slice(2,8).join('\n')
-        });
+  const el = await waitFor('#invState', 10000);
+  if (!el) { console.debug('[CasaLuna] invState not found after wait'); return; }
+  console.debug('[CasaLuna] invState observer attached', { time: new Date().toISOString() });
+
+  const mo = new MutationObserver((records) => {
+    records.forEach(r => {
+      console.debug('[CasaLuna] invState mutated', {
+        oldValue: r.oldValue,
+        newValue: el.textContent,
+        time: new Date().toISOString(),
+        stack: (new Error()).stack.split('\n').slice(2,8).join('\n')
       });
     });
-    mo.observe(el, { childList: true, subtree: true, characterData: true, characterDataOldValue: true });
   });
+  mo.observe(el, { childList: true, subtree: true, characterData: true, characterDataOldValue: true });
 })();
 
   }
