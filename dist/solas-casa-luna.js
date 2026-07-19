@@ -1,4 +1,4 @@
-// v2.0.24 stable · build no.101
+// v2.0.25 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.24';
+const VERSION = '2.0.25';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1034,7 +1034,7 @@ class CasaLuna extends HTMLElement {
       0: '#9aa6b2', // Standby / neutral
       1: '#f5a623', // Self Test / warning
       2: '#22c3ff', // Normal / info
-      3: '#39d353', // Online / green
+      3: '#39d358', // Online / green
       4: '#ff4d4f', // Fault / red
       5: '#9aa6b2', // Shutdown / neutral
       6: '#9aa6b2', // Grid Off / neutral
