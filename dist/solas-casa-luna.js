@@ -1,4 +1,4 @@
-// v2.0.19 stable · build no.101
+// v2.0.20 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.19';
+const VERSION = '2.0.20';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1934,8 +1934,13 @@ class CasaLuna extends HTMLElement {
       <div class="val" id="modeVal" style="position:absolute;left:16px;top:33px;font-size:${Number(c.sz_mode) || 17}px;color:#22c3ff">--</div>
       <div style="position:absolute;left:14px;right:14px;top:66px;height:1px;background:rgba(150,200,255,.18)"></div>
       <div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:4px">
-        <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_state || 'INV STATE')}</span>
-        <span class="val" id="invState" data-entity="${c.inverter_state || ''}" style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:#39d353;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">--</span>
+        <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">
+          ${esc(c.label_inverter_state || 'INV STATE')}
+        </span>
+        <span class="val" id="invState" data-entity="${c.inverter_state || ''}"
+          style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${this._invStateColor(this._st(c.inverter_state))};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${esc(this._invStateLabel(this._st(c.inverter_state)))}
+        </span>
       </div>
     </div>`;
     const [cx0, cy0, cw0, ch0] = SL.r_cyl;
@@ -2511,6 +2516,40 @@ class CasaLuna extends HTMLElement {
     return `<div class="pw-mtile" style="cursor:default">
       <div class="mi">${icon}</div><div class="ml">${esc(label)}</div>
       <div class="mv">${esc(val)}</div></div>`;
+  }
+
+  // inverter state label mapper
+  // Purpose: convert numeric inverter state codes into human-readable labels.
+  _invStateLabel(code) {
+    const map = {
+      0: 'Standby',
+      1: 'Self Test',
+      2: 'Normal',
+      3: 'Online',
+      4: 'Fault',
+      5: 'Shutdown',
+      6: 'Grid Off',
+      7: 'Idle'
+    };
+    const n = Number(code);
+    return map[n] || code || '--';
+  }
+
+  // inverter state color mapper
+  // Purpose: return a color hex for each inverter state to use inline or CSS styling.
+  _invStateColor(code) {
+    const map = {
+      0: '#9aa6b2', // Standby / neutral
+      1: '#f5a623', // Self Test / warning
+      2: '#22c3ff', // Normal / info
+      3: '#39d353', // Online / green
+      4: '#ff4d4f', // Fault / red
+      5: '#9aa6b2', // Shutdown / neutral
+      6: '#9aa6b2', // Grid Off / neutral
+      7: '#9aa6b2'  // Idle / neutral
+    };
+    const n = Number(code);
+    return map.hasOwnProperty(n) ? map[n] : '#9aa6b2';
   }
 
   /* compact toggle TILE: icon / label / switch stacked */
