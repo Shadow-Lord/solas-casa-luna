@@ -1,4 +1,4 @@
-// v2.0.35 stable · build no.101
+// v2.0.36 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.35';
+const VERSION = '2.0.36';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1586,28 +1586,24 @@ _getInverterStateDisplay(c) {
     this._lang = ((this.config.language || this._hass?.locale?.language || this._hass?.language || 'en') + '').toLowerCase().slice(0, 2);
     const c = this._lc = this._localizedConfig();
 
-// compute display once, early
-const invDisplay = this._getInverterStateDisplay(c);
+    // compute display once, early
+    const invDisplay = this._getInverterStateDisplay(c);
 
-// DEBUG: log the resolved display and source entities
-console.debug('[CasaLuna] invDisplay', {
-  entity_config: c.inverter_state,
-  solar_config: c.inverter_state,
-  raw: invDisplay?.raw,
-  code: invDisplay?.code,
-  label: invDisplay?.label,
-  color: invDisplay?.color,
-  time: new Date().toISOString()
-});
+    // expose on config for templates or later DOM updates
+    c.inverter_state_display = invDisplay.label;
+    c.inverter_state_display_color = invDisplay.color;
+    c.inverter_state_display_raw = invDisplay.raw;
 
-// expose on config for templates or later DOM updates
-c.inverter_state_display = invDisplay.label;
-c.inverter_state_display_color = invDisplay.color;
-c.inverter_state_display_raw = invDisplay.raw;
+    // defensive write to DOM using the canonical display
+    const invEl = this._q('#invState') || document.getElementById('invState');
+    if (invEl) {
+        invEl.textContent = invDisplay.label || '--';
+        invEl.style.color = invDisplay.color || '#9aa6b2';
+        invEl.title = (invDisplay.raw == null ? '' : String(invDisplay.raw));
+    } else {
+        this._setTxt('#invState', invDisplay.label || '--');
+    }
 
-console.debug('[CasaLuna] invDisplay', {
-  entity_config: c.inverter_state_display
-});
     const css = this._styles();
 
     /* header (open zone) — hardcoded title/subtitle, weather as HTML */
@@ -2365,52 +2361,6 @@ console.debug('[CasaLuna] invDisplay', {
     this._built = true;
     this._applyTheme();
     this._setBackground(true);
-    
-// deep query that walks into shadow roots
-function queryDeep(selector, root = document) {
-  const el = root.querySelector(selector);
-  if (el) return el;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null, false);
-  let node;
-  while ((node = walker.nextNode())) {
-    if (node.shadowRoot) {
-      const found = queryDeep(selector, node.shadowRoot);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-// wait for element then observe
-(async () => {
-  const waitFor = (sel, timeout = 10000) => new Promise(resolve => {
-    const found = queryDeep(sel);
-    if (found) return resolve(found);
-    const mo = new MutationObserver(() => {
-      const f = queryDeep(sel);
-      if (f) { mo.disconnect(); resolve(f); }
-    });
-    mo.observe(document, { childList: true, subtree: true });
-    setTimeout(() => { mo.disconnect(); resolve(null); }, timeout);
-  });
-
-  const el = await waitFor('#invState', 10000);
-  if (!el) { console.debug('[CasaLuna] invState not found after wait'); return; }
-  console.debug('[CasaLuna] invState observer attached', { time: new Date().toISOString() });
-
-  const mo = new MutationObserver((records) => {
-    records.forEach(r => {
-      console.debug('[CasaLuna] invState mutated', {
-        oldValue: r.oldValue,
-        newValue: el.textContent,
-        time: new Date().toISOString(),
-        stack: (new Error()).stack.split('\n').slice(2,8).join('\n')
-      });
-    });
-  });
-  mo.observe(el, { childList: true, subtree: true, characterData: true, characterDataOldValue: true });
-})();
-
   }
 
   /* wire all DOM interactions after innerHTML is set (called once from _build) */
@@ -4290,11 +4240,48 @@ function queryDeep(selector, root = document) {
     if (bP < -50) { modeTxt = 'CHARGING';    modeCol = '#46e05a'; }
     const mv = this._q('#modeVal');
     if (mv) { mv.textContent = this._t(modeTxt); mv.style.color = modeCol; }
-    // inverter state (work_mode entity) — e.g. On-Grid / Off-Grid / Backup
-    const invSo = this._stateObj(c.inverter_state_display);
-    const invSt = invSo && this._hass.formatEntityState ? this._hass.formatEntityState(invSo)
-                : (invSo ? this._cap(invSo.state) : '');
-    this._setTxt('#invState', invSt || '--');
+    // inverter state display: prefer mapped label/color for numeric codes, fallback to HA formatting
+    const invSo = this._stateObj(c.inverter_state);
+    const rawState = invSo ? invSo.state : null;
+    const numericMatch = (typeof rawState === 'string') ? rawState.match(/-?\d+/) : null;
+    const code = numericMatch ? Number(numericMatch[0]) : (typeof rawState === 'number' ? rawState : null);
+
+    // build display object
+    const invDisplay = (() => {
+        if (code !== null && code !== undefined) {
+            // use your mapping helper if present, otherwise simple map
+            if (this._invStateLabel || this._invStateColor) {
+                const label = this._invStateLabel ? this._invStateLabel(code) : String(code);
+                const color = this._invStateColor ? this._invStateColor(code) : '#9aa6b2';
+                return { raw: rawState, code, label, color };
+            }
+            // fallback mapping (adjust labels/colors to your needs)
+            const map = {
+                0: { label: 'Offline', color: '#ff5040' },
+                1: { label: 'Starting', color: '#ffaa28' },
+                2: { label: 'Standby', color: '#a8cae6' },
+                3: { label: 'Online', color: '#39d353' }
+            };
+            return map[code] || { raw: rawState, code, label: String(code), color: '#9aa6b2' };
+        }
+
+        // non-numeric: prefer Home Assistant formatting if available
+        if (invSo && this._hass && this._hass.formatEntityState) {
+            return { raw: rawState, code: null, label: this._hass.formatEntityState(invSo), color: '#9aa6b2' };
+        }
+
+        return { raw: rawState, code: null, label: (invSo ? this._cap(invSo.state) : '--'), color: '#9aa6b2' };
+    })();
+
+    // write to DOM (defensive)
+    const invEl = this._q('#invState') || document.getElementById('invState');
+    if (invEl) {
+        invEl.textContent = invDisplay.label || '--';
+        invEl.style.color = invDisplay.color || '#9aa6b2';
+        invEl.title = (invDisplay.raw == null ? '' : String(invDisplay.raw));
+    } else {
+        this._setTxt('#invState', invDisplay.label || '--');
+    }
 
     // Khan-style battery fill — single or dual (split) cylinder
     if (c._show_battery2) {
