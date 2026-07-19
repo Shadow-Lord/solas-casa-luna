@@ -1,4 +1,4 @@
-// v2.0.26 stable · build no.101
+// v2.0.27 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.26';
+const VERSION = '2.0.27';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2366,21 +2366,34 @@ c.inverter_state_display_raw = invDisplay.raw;
     this._applyTheme();
     this._setBackground(true);
     
-// TEMP DEBUG: observe #invState for later overwrites and capture a short stack
+// TEMP DEBUG: wait for #invState then observe mutations and log a short stack
 (() => {
-  const el = document.getElementById('invState');
-  if (!el) return;
-  const mo = new MutationObserver((records) => {
-    records.forEach(r => {
-      console.debug('[CasaLuna] invState mutated', {
-        oldValue: r.oldValue,
-        newValue: el.textContent,
-        time: new Date().toISOString(),
-        stack: (new Error()).stack.split('\n').slice(2,6).join('\n')
+  const waitForEl = (sel, timeout = 5000) => new Promise((resolve) => {
+    const el = document.querySelector(sel);
+    if (el) return resolve(el);
+    const to = setTimeout(() => { mo && mo.disconnect(); resolve(null); }, timeout);
+    const mo = new MutationObserver(() => {
+      const e = document.querySelector(sel);
+      if (e) { clearTimeout(to); mo.disconnect(); resolve(e); }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  });
+
+  waitForEl('#invState', 10000).then(el => {
+    if (!el) { console.debug('[CasaLuna] invState not found after wait'); return; }
+    console.debug('[CasaLuna] invState observer attached', { time: new Date().toISOString() });
+    const mo = new MutationObserver((records) => {
+      records.forEach(r => {
+        console.debug('[CasaLuna] invState mutated', {
+          oldValue: r.oldValue,
+          newValue: el.textContent,
+          time: new Date().toISOString(),
+          stack: (new Error()).stack.split('\n').slice(2,8).join('\n')
+        });
       });
     });
+    mo.observe(el, { childList: true, subtree: true, characterData: true, characterDataOldValue: true });
   });
-  mo.observe(el, { childList: true, subtree: true, characterData: true, characterDataOldValue: true });
 })();
 
   }
