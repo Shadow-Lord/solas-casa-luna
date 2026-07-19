@@ -1,4 +1,4 @@
-// v2.0.21 stable · build no.101
+// v2.0.22 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.21';
+const VERSION = '2.0.22';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1009,6 +1009,41 @@ class CasaLuna extends HTMLElement {
   }
   _name(id) { return this._attr(id, 'friendly_name') || id; }
   _lastChanged(id) { const lc = this._stateObj(id)?.last_changed; return lc ? new Date(lc).getTime() : null; }
+
+  // inverter state label mapper
+  // Purpose: convert numeric inverter state codes into human-readable labels.
+  _invStateLabel(code) {
+    const map = {
+      0: 'Standby',
+      1: 'Self Test',
+      2: 'Normal',
+      3: 'Online',
+      4: 'Fault',
+      5: 'Shutdown',
+      6: 'Grid Off',
+      7: 'Idle'
+    };
+    const n = Number(code);
+    return map[n] || code || '--';
+  }
+
+  // inverter state color mapper
+  // Purpose: return a color hex for each inverter state to use inline or CSS styling.
+  _invStateColor(code) {
+    const map = {
+      0: '#9aa6b2', // Standby / neutral
+      1: '#f5a623', // Self Test / warning
+      2: '#22c3ff', // Normal / info
+      3: '#39d353', // Online / green
+      4: '#ff4d4f', // Fault / red
+      5: '#9aa6b2', // Shutdown / neutral
+      6: '#9aa6b2', // Grid Off / neutral
+      7: '#9aa6b2'  // Idle / neutral
+    };
+    const n = Number(code);
+    return map.hasOwnProperty(n) ? map[n] : '#9aa6b2';
+  }
+
 
   /* ── demo-mode: synthetic state for a missing/unavailable entity. Stable
      per-id (hashed seed), domain- and keyword-aware so values look plausible
@@ -2544,40 +2579,6 @@ class CasaLuna extends HTMLElement {
     return `<div class="pw-mtile" style="cursor:default">
       <div class="mi">${icon}</div><div class="ml">${esc(label)}</div>
       <div class="mv">${esc(val)}</div></div>`;
-  }
-
-  // inverter state label mapper
-  // Purpose: convert numeric inverter state codes into human-readable labels.
-  _invStateLabel(code) {
-    const map = {
-      0: 'Standby',
-      1: 'Self Test',
-      2: 'Normal',
-      3: 'Online',
-      4: 'Fault',
-      5: 'Shutdown',
-      6: 'Grid Off',
-      7: 'Idle'
-    };
-    const n = Number(code);
-    return map[n] || code || '--';
-  }
-
-  // inverter state color mapper
-  // Purpose: return a color hex for each inverter state to use inline or CSS styling.
-  _invStateColor(code) {
-    const map = {
-      0: '#9aa6b2', // Standby / neutral
-      1: '#f5a623', // Self Test / warning
-      2: '#22c3ff', // Normal / info
-      3: '#39d353', // Online / green
-      4: '#ff4d4f', // Fault / red
-      5: '#9aa6b2', // Shutdown / neutral
-      6: '#9aa6b2', // Grid Off / neutral
-      7: '#9aa6b2'  // Idle / neutral
-    };
-    const n = Number(code);
-    return map.hasOwnProperty(n) ? map[n] : '#9aa6b2';
   }
 
   /* compact toggle TILE: icon / label / switch stacked */
