@@ -1,4 +1,4 @@
-// v2.0.36 stable · build no.101
+// v2.0.37 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.36';
+const VERSION = '2.0.37';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -803,7 +803,7 @@ class CasaLuna extends HTMLElement {
       /* per-element font sizes (px) — default to current values; editor lets user resize */
       sz_soc: 21,
       sz_mode: 17,
-      sz_invstate: 9,
+      sz_invstate: 11,
       ui_bg_color: '#000000',
       ui_bg_opacity: 35,
       ui_blur: 9,
@@ -1014,17 +1014,17 @@ class CasaLuna extends HTMLElement {
   // Purpose: convert numeric inverter state codes into human-readable labels.
   _invStateLabel(code) {
     const map = {
-      0: 'Standby',
-      1: 'Self Test',
-      2: 'Normal',
-      3: 'Online',
-      4: 'Fault',
-      5: 'Shutdown',
-      6: 'Grid Off',
-      7: 'Idle'
+      0: 'STANDBY',
+      1: 'SELF TEST',
+      2: 'NORMAL',
+      3: 'ONLINE',
+      4: 'FAULT',
+      5: 'SHUTDOWN',
+      6: 'GRID OFF',
+      7: 'IDLE'
     };
     const n = Number(code);
-    return map[n] || code || '--';
+    return map.hasOwnProperty(n) ? map[n] : (code == null ? '--' : String(code).toUpperCase());
   }
 
   // inverter state color mapper
@@ -2017,13 +2017,10 @@ _getInverterStateDisplay(c) {
       <div class="lbl" style="position:absolute;left:16px;top:11px">BATTERY MODE</div>
       <div class="val" id="modeVal" style="position:absolute;left:16px;top:33px;font-size:${Number(c.sz_mode) || 17}px;color:#22c3ff">--</div>
       <div style="position:absolute;left:14px;right:14px;top:66px;height:1px;background:rgba(150,200,255,.18)"></div>
-<div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:4px">
-  <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">
-    ${esc(c.label_inverter_state || 'INV STATE')}
-  </span>
-  <span class="val" id="invState" data-entity="${c.inverter_state || ''}" style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${c.inverter_state_display_color || '#39d353'};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.inverter_state_display || '--'}</span>
-</div>
-
+      <div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:4px">
+        <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_state || 'INV STATE')}</span>
+        <span class="val" id="invState" data-entity="${c.inverter_state || ''}" style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${c.inverter_state_display_color || '#39d353'};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.inverter_state_display || '--'}</span>
+      </div>
     </div>`;
     const [cx0, cy0, cw0, ch0] = SL.r_cyl;
     const cylinder = `
@@ -4246,32 +4243,44 @@ _getInverterStateDisplay(c) {
     const numericMatch = (typeof rawState === 'string') ? rawState.match(/-?\d+/) : null;
     const code = numericMatch ? Number(numericMatch[0]) : (typeof rawState === 'number' ? rawState : null);
 
-    // build display object
-    const invDisplay = (() => {
+    // canonical display: prefer central accessor if available
+    const invDisplay = this._getInverterStateDisplay ? this._getInverterStateDisplay(c) : (() => {
+        // numeric code path
         if (code !== null && code !== undefined) {
-            // use your mapping helper if present, otherwise simple map
+            // prefer central label/color helpers when present
             if (this._invStateLabel || this._invStateColor) {
-                const label = this._invStateLabel ? this._invStateLabel(code) : String(code);
+                const label = this._invStateLabel ? this._invStateLabel(code) : String(code).toUpperCase();
                 const color = this._invStateColor ? this._invStateColor(code) : '#9aa6b2';
                 return { raw: rawState, code, label, color };
             }
-            // fallback mapping (adjust labels/colors to your needs)
+            // fallback mapping (UPPERCASE labels)
             const map = {
-                0: { label: 'Offline', color: '#ff5040' },
-                1: { label: 'Starting', color: '#ffaa28' },
-                2: { label: 'Standby', color: '#a8cae6' },
-                3: { label: 'Online', color: '#39d353' }
+                0: { label: 'STANDBY', color: '#9aa6b2' },
+                1: { label: 'SELF TEST', color: '#f5a623' },
+                2: { label: 'NORMAL', color: '#22c3ff' },
+                3: { label: 'ONLINE', color: '#39d353' },
+                4: { label: 'FAULT', color: '#ff4d4f' },
+                5: { label: 'SHUTDOWN', color: '#9aa6b2' },
+                6: { label: 'GRID OFF', color: '#9aa6b2' },
+                7: { label: 'IDLE', color: '#9aa6b2' }
             };
-            return map[code] || { raw: rawState, code, label: String(code), color: '#9aa6b2' };
+            return map.hasOwnProperty(code) ? { raw: rawState, code, label: map[code].label, color: map[code].color } : { raw: rawState, code, label: String(code).toUpperCase(), color: '#9aa6b2' };
         }
 
-        // non-numeric: prefer Home Assistant formatting if available
+        // non-numeric: prefer Home Assistant formatting if available (convert to UPPERCASE)
         if (invSo && this._hass && this._hass.formatEntityState) {
-            return { raw: rawState, code: null, label: this._hass.formatEntityState(invSo), color: '#9aa6b2' };
+            const formatted = this._hass.formatEntityState(invSo);
+            return { raw: rawState, code: null, label: (formatted ? String(formatted).toUpperCase() : '--'), color: '#9aa6b2' };
         }
 
-        return { raw: rawState, code: null, label: (invSo ? this._cap(invSo.state) : '--'), color: '#9aa6b2' };
+        // final fallback
+        return { raw: rawState, code: null, label: (invSo ? String(this._cap(invSo.state)).toUpperCase() : '--'), color: '#9aa6b2' };
     })();
+
+    // expose on config for templates or later DOM updates
+    c.inverter_state_display = invDisplay.label;
+    c.inverter_state_display_color = invDisplay.color;
+    c.inverter_state_display_raw = invDisplay.raw;
 
     // write to DOM (defensive)
     const invEl = this._q('#invState') || document.getElementById('invState');
