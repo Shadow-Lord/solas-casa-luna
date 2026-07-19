@@ -1,4 +1,4 @@
-// v2.0.20 stable · build no.101
+// v2.0.21 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.20';
+const VERSION = '2.0.21';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -788,8 +788,12 @@ class CasaLuna extends HTMLElement {
       sys_inv_temp: '',
       sys_work_mode: '',
       sys_c3_status: '',
-      sys_board_temp: '', sys_gas: '', sys_lux: '',
-      sys_wifi: '', sys_bluetooth: '', sys_grid_meter: '',
+      sys_board_temp: '',
+      sys_gas: '',
+      sys_lux: '',
+      sys_wifi: '',
+      sys_bluetooth: '',
+      sys_grid_meter: '',
       _demo_mode: false,
       calendar_entities: [],
       sys_cpu: '',
@@ -797,20 +801,35 @@ class CasaLuna extends HTMLElement {
       sys_disk: '',
       sys_uptime: '',
       /* per-element font sizes (px) — default to current values; editor lets user resize */
-      sz_soc: 21, sz_mode: 17, sz_invstate: 9,
-      ui_bg_color: '#000000', ui_bg_opacity: 35, ui_blur: 9,
-      sz_flow_power: 16, sz_flow_volt: 13,
-      sz_batbox_label: 12, sz_batbox_value: 17,
-      sz_tile_label: 11, sz_tile_value: 21,
-      sz_prodcons_total: 15, sz_pvtile: 14,
-      sz_bottile_label: 12, sz_bottile_value: 15,
-      sz_totals_value: 16, sz_invload: 22,
+      sz_soc: 21,
+      sz_mode: 17,
+      sz_invstate: 9,
+      ui_bg_color: '#000000',
+      ui_bg_opacity: 35,
+      ui_blur: 9,
+      sz_flow_power: 16,
+      sz_flow_volt: 13,
+      sz_batbox_label: 12,
+      sz_batbox_value: 17,
+      sz_tile_label: 11,
+      sz_tile_value: 21,
+      sz_prodcons_total: 15,
+      sz_pvtile: 14,
+      sz_bottile_label: 12,
+      sz_bottile_value: 15,
+      sz_totals_value: 16,
+      sz_invload: 22,
       /* —— per-entity labels (customizable via ✏️ in each section) —— */
-      label_grid_import_today: 'GRID IMPORT', label_grid_export_energy: 'GRID EXPORT',
+      label_grid_import_today: 'GRID IMPORT',
+      label_grid_export_energy: 'GRID EXPORT',
       label_consump: 'LOAD',
-      label_total_pv: 'TOTAL PV', label_inverter_state: 'INV STATE',
-      label_today_consumption: "TODAY'S CONSUMPTION", label_today_production: "TODAY'S PRODUCTION",
-      label_total_imp: 'TOTAL IMP', label_total_exp: 'TOTAL EXP', label_chg_dis: 'CHG / DIS',
+      label_total_pv: 'TOTAL PV',
+      label_inverter_state: 'INV STATE',
+      label_today_consumption: "TODAY'S CONSUMPTION",
+      label_today_production: "TODAY'S PRODUCTION",
+      label_total_imp: 'TOTAL IMP',
+      label_total_exp: 'TOTAL EXP',
+      label_chg_dis: 'CHG / DIS',
     };
   }
 
@@ -1934,13 +1953,22 @@ class CasaLuna extends HTMLElement {
       <div class="val" id="modeVal" style="position:absolute;left:16px;top:33px;font-size:${Number(c.sz_mode) || 17}px;color:#22c3ff">--</div>
       <div style="position:absolute;left:14px;right:14px;top:66px;height:1px;background:rgba(150,200,255,.18)"></div>
       <div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:4px">
-        <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">
-          ${esc(c.label_inverter_state || 'INV STATE')}
-        </span>
-        <span class="val" id="invState" data-entity="${c.inverter_state || ''}"
-          style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${this._invStateColor(this._st(c.inverter_state))};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-          ${esc(this._invStateLabel(this._st(c.inverter_state)))}
-        </span>
+        <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_state || 'INV STATE')}</span>
+        ${(() => {
+          // get raw state string/value from HA
+          const rawState = this._st(c.inverter_state);
+          // try to extract a leading integer code if present
+          const m = (typeof rawState === 'string') ? rawState.match(/-?\d+/) : null;
+          const code = m ? Number(m[0]) : rawState;
+          const label = this._invStateLabel(code);
+          const color = this._invStateColor(code);
+          const title = (rawState == null || rawState === '') ? '' : String(rawState).trim();
+          return `<span class="val" id="invState" data-entity="${esc(c.inverter_state || '')}"
+            title="${esc(title)}"
+            style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${esc(color)};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            ${esc(label)}
+          </span>`;
+        })()}
       </div>
     </div>`;
     const [cx0, cy0, cw0, ch0] = SL.r_cyl;
