@@ -1,4 +1,4 @@
-// v2.0.22 stable · build no.101
+// v2.0.23 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.22';
+const VERSION = '2.0.23';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1988,23 +1988,35 @@ class CasaLuna extends HTMLElement {
       <div class="val" id="modeVal" style="position:absolute;left:16px;top:33px;font-size:${Number(c.sz_mode) || 17}px;color:#22c3ff">--</div>
       <div style="position:absolute;left:14px;right:14px;top:66px;height:1px;background:rgba(150,200,255,.18)"></div>
       <div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:4px">
-        <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_state || 'INV STATE')}</span>
-        ${(() => {
-          // get raw state string/value from HA
-          const rawState = this._st(c.inverter_state);
-          // try to extract a leading integer code if present
-          const m = (typeof rawState === 'string') ? rawState.match(/-?\d+/) : null;
-          const code = m ? Number(m[0]) : rawState;
-          const label = this._invStateLabel(code);
-          const color = this._invStateColor(code);
-          const title = (rawState == null || rawState === '') ? '' : String(rawState).trim();
-          return `<span class="val" id="invState" data-entity="${esc(c.inverter_state || '')}"
-            title="${esc(title)}"
-            style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${esc(color)};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-            ${esc(label)}
-          </span>`;
-        })()}
-      </div>
+<span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">
+  ${esc(c.label_inverter_state || 'INV STATE')}
+</span>
+${(() => {
+  // get raw state string/value from HA
+  const rawState = this._st(c.inverter_state);
+  // try to extract a leading integer code if present
+  const m = (typeof rawState === 'string') ? rawState.match(/-?\d+/) : null;
+  const code = m ? Number(m[0]) : rawState;
+  const label = this._invStateLabel(code);
+  const color = this._invStateColor(code);
+  const title = (rawState == null || rawState === '') ? '' : String(rawState).trim();
+
+  // DEBUG: inspect values in the browser console (remove when done)
+  console.debug('[CasaLuna] invState debug:', {
+    config_inverter_state: c.inverter_state,
+    rawState,
+    extractedCode: code,
+    mappedLabel: label,
+    mappedColor: color
+  });
+
+  return `<span class="val" id="invState" data-entity="${esc(c.inverter_state || '')}"
+    title="${esc(title)}"
+    style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${esc(color)};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+    ${esc(label)}
+  </span>`;
+})()}
+
     </div>`;
     const [cx0, cy0, cw0, ch0] = SL.r_cyl;
     const cylinder = `
