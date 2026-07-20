@@ -1,4 +1,4 @@
-// v2.0.42 stable · build no.101
+// v2.0.43 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.42';
+const VERSION = '2.0.43';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2019,11 +2019,11 @@ _getInverterStateDisplay(c) {
       <div class="lbl" style="position:absolute;left:16px;top:11px">BATTERY MODE</div>
       <div class="val" id="modeVal" style="position:absolute;left:16px;top:33px;font-size:${Number(c.sz_mode) || 17}px;color:#22c3ff">--</div>
       <div style="position:absolute;left:14px;right:14px;top:66px;height:1px;background:rgba(150,200,255,.18)"></div>
-      <div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:4px">
+      <div style="position:absolute;left:16px;right:14px;top:72px;display:flex;align-items:center;justify-content:space-between;gap:4px">
         <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_state || 'INV STATE')}</span>
         <span class="val" id="invState" data-entity="${c.inverter_state || ''}" style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${c.inverter_state_display_color || '#39d353'};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.inverter_state_display || '--'}</span>
       </div>
-      <div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:4px">
+      <div style="position:absolute;left:16px;right:14px;top:82px;display:flex;align-items:center;justify-content:space-between;gap:4px">
         <span id="invTimeLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_time || 'INV TIME')}</span>
         <span class="val" id="invTime" data-entity="${c.inverter_time || ''}" style="font-size:${Number(c.sz_invtime) || 13}px;font-weight:650;color:#39d353;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.inverter_time || '--'}</span>
       </div>
@@ -5563,7 +5563,7 @@ class CasaLunaEditor extends HTMLElement {
     ]));
 
     shell.appendChild(section('inverter', '🔄', 'Inverter Status', [
-      egL('inverter_time', 'INVERTER TIME'),
+      eg('inverter_time', 'INVERTER TIME'),
       egL('inverter_state', 'INV STATE'),
       eg('inv_temp', 'INVERTER TEMP'),
       eg('inverter_error', 'INVERTER ERROR'),
