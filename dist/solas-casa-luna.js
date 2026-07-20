@@ -1,4 +1,4 @@
-// v2.0.39 stable · build no.101
+// v2.0.40 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.39';
+const VERSION = '2.0.40';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3187,7 +3187,7 @@ _getInverterStateDisplay(c) {
         + this._wTile('🏭', 'Grid', bf('en_grid_power', 'grid_active_power'), 'W', true)
         + this._wTile('🏠', 'Load', bf('en_load', 'consump'), 'W', true)
         + this._wTile('🔋', 'Backup', c.en_backup || '', 'W', true)
-        + this._wTile('⚙️', 'Mode', bf('en_work_mode', 'inverter_state')))
+        + this._wTile('⚙️', 'Inv State', bf('en_work_mode', 'inverter_state')))
       + this._wHead('Inverter Controls')
       + this._wGrid(3,
         this._wToggleTile('🔋', 'Backup', c.en_backup_supply || '')
