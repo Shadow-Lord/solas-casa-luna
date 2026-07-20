@@ -1,4 +1,4 @@
-// v2.0.38 stable · build no.101
+// v2.0.39 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.38';
+const VERSION = '2.0.39';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -4300,7 +4300,7 @@ _getInverterStateDisplay(c) {
     if (invEl) {
         invEl.textContent = invDisplay.label || '--';
         invEl.style.color = invDisplay.color || '#9aa6b2';
-        invEl.title = (invDisplay.raw == null ? '' : String(invDisplay.raw));
+        invEl.title = invDisplay.label || '--';
     } else {
         this._setTxt('#invState', invDisplay.label || '--');
     }
