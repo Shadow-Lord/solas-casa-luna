@@ -1,4 +1,4 @@
-// v2.0.37 stable · build no.101
+// v2.0.38 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.37';
+const VERSION = '2.0.38';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2550,15 +2550,28 @@ _getInverterStateDisplay(c) {
     const raw = has ? this._st(entId) : null;
     const bad = raw == null || raw === '' || /^(unavailable|unknown)$/i.test(raw);
     let val;
-    if (bad) {
-      val = '--';
-    } else if (isPower) {
-      const w = this._watts(entId, NaN);
-      val = Number.isFinite(w) ? `${this._dec(w)}${unit ? ' ' + unit : ''}` : `${raw}${unit ? ' ' + unit : ''}`;
+
+    // Special-case: inverter state entity -> use canonical display (mapped label + color)
+    // Replace 'sensor.inverter_state' with your actual inverter entity id if different
+    if (has && entId === (this._lc && this._lc.inverter_state ? this._lc.inverter_state : 'sensor.inverter_state')) {
+        const invDisplay = this._getInverterStateDisplay ? this._getInverterStateDisplay(this._lc || {}) : null;
+        if (invDisplay && invDisplay.label) {
+            val = invDisplay.label;
+        } else {
+            val = bad ? '--' : (raw || '--');
+        }
     } else {
-      const n = this._num(entId, NaN);
-      val = Number.isFinite(n) ? `${this._decEnt(entId)}${unit ? ' ' + unit : ''}` : `${raw}${unit ? ' ' + unit : ''}`;
+        if (bad) {
+            val = '--';
+        } else if (isPower) {
+            const w = this._watts(entId, NaN);
+            val = Number.isFinite(w) ? `${this._dec(w)}${unit ? ' ' + unit : ''}` : `${raw}${unit ? ' ' + unit : ''}`;
+        } else {
+            const n = this._num(entId, NaN);
+            val = Number.isFinite(n) ? `${this._decEnt(entId)}${unit ? ' ' + unit : ''}` : `${raw}${unit ? ' ' + unit : ''}`;
+        }
     }
+
     return `<div class="pw-mtile" ${has ? `data-more="${esc(entId)}" style="cursor:pointer"` : ''}>
       <div class="mi">${icon}</div><div class="ml">${esc(label)}</div>
       <div class="mv${bad ? ' off' : ''}" ${has ? `data-val="${esc(entId)}" data-unit="${esc(unit)}"` : ''}>${esc(val)}</div></div>`;
@@ -3342,7 +3355,7 @@ _getInverterStateDisplay(c) {
     return this._wHead('Inverter & ESP')
       + this._wGrid(4,
         this._wTile('🌡️', 'Inv Temp', bf('sys_inv_temp', 'inv_temp'), '°C')
-        + this._wTile('⚙️', 'Mode', bf('sys_work_mode', 'inverter_state'))
+        + this._wTile('⚙️', 'Inv State', bf('sys_work_mode', 'inverter_state'))
         + this._wTile('📟', 'C3', c.sys_c3_status || '')
         + this._wTile('🌡️', 'Board', c.sys_board_temp || '', '°C')
         + this._wTile('💨', 'Gas', c.sys_gas || '', 'ppm')
