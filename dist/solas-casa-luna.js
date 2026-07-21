@@ -1,4 +1,4 @@
-// v2.0.45 stable · build no.101
+// v2.0.46 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.45';
+const VERSION = '2.0.46';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1046,10 +1046,10 @@ class CasaLuna extends HTMLElement {
     return map.hasOwnProperty(n) ? map[n] : '#9aa6b2';
   }
 
-  // central accessor: read inverter_state, parse numeric code, return display object
+  // central accessor: read inverter_time (entity or literal), parse numeric code, return display object
   _getInverterStateDisplay(c) {
-    // read the authoritative sensor (inverter_state)
-    const rawState = this._st(c.inverter_state);
+    // read the authoritative value from c.inverter_time (entity id or literal)
+    const rawState = this._st && c.inverter_time ? this._st(c.inverter_time) : (c.inverter_time || null);
     // extract first integer if the state is a string like "3 (Online)"
     const m = (typeof rawState === 'string') ? rawState.match(/-?\d+/) : null;
     const code = m ? Number(m[0]) : (typeof rawState === 'number' ? rawState : rawState);
@@ -1070,16 +1070,15 @@ class CasaLuna extends HTMLElement {
     }
   }
 
-  // compute and render inverter time (metadata-agnostic: only uses first ISO timestamp)
+  // compute and render inverter time using c.inverter_time (entity id or literal)
   _computeAndRenderInverterTime(c) {
-    const invSo = this._stateObj(c.inverter_state);
     let rawCandidate = null;
-
-    if (c.inverter_time_entity) rawCandidate = this._st(c.inverter_time_entity);
-    if (!rawCandidate && invSo && invSo.attributes) {
-      rawCandidate = invSo.attributes.inverter_time || invSo.attributes.local_time || invSo.attributes.time || invSo.attributes.clock || null;
+    // prefer reading c.inverter_time as an entity id if present
+    if (c.inverter_time) {
+      // try reading as entity state; if _st is unavailable or returns null, fall back to literal
+      const maybe = (typeof this._st === 'function') ? this._st(c.inverter_time) : null;
+      rawCandidate = (maybe == null || maybe === '') ? c.inverter_time : maybe;
     }
-    if (!rawCandidate && invSo && invSo.last_changed) rawCandidate = invSo.last_changed;
 
     const s = rawCandidate == null ? '' : String(rawCandidate);
     const isoMatch = s.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2}|Z)?/);
