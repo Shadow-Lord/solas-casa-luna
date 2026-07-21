@@ -1,4 +1,4 @@
-// v2.0.44 stable · build no.101
+// v2.0.45 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.44';
+const VERSION = '2.0.45';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1058,60 +1058,45 @@ class CasaLuna extends HTMLElement {
     return { raw: rawState, code, label, color };
   }
 
-  // helper: format a Date using card language
+  // format an ISO/timestamp to localized HH:MM:SS
   _formatTimeForUI(dt) {
     try {
-      const lang = this._lang || 'en';
-      return new Date(dt).toLocaleString(lang, {
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-      });
+      const date = new Date(dt);
+      if (Number.isNaN(date.getTime())) return String(dt);
+      const lang = this._lang || navigator.language || 'en';
+      return date.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     } catch (e) {
       return String(dt);
     }
   }
 
-  // compute inverter time display and write to DOM
+  // compute and render inverter time (metadata-agnostic: only uses first ISO timestamp)
   _computeAndRenderInverterTime(c) {
     const invSo = this._stateObj(c.inverter_state);
-    let invTimeRaw = null;
+    let rawCandidate = null;
 
-    // 1) explicit configured entity (preferred)
-    if (c.inverter_time_entity) {
-      invTimeRaw = this._st(c.inverter_time_entity);
+    if (c.inverter_time_entity) rawCandidate = this._st(c.inverter_time_entity);
+    if (!rawCandidate && invSo && invSo.attributes) {
+      rawCandidate = invSo.attributes.inverter_time || invSo.attributes.local_time || invSo.attributes.time || invSo.attributes.clock || null;
     }
+    if (!rawCandidate && invSo && invSo.last_changed) rawCandidate = invSo.last_changed;
 
-    // 2) inverter entity attributes (common names)
-    if (!invTimeRaw && invSo && invSo.attributes) {
-      invTimeRaw = invSo.attributes.inverter_time || invSo.attributes.local_time || invSo.attributes.time || invSo.attributes.clock || null;
-    }
+    const s = rawCandidate == null ? '' : String(rawCandidate);
+    const isoMatch = s.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2}|Z)?/);
+    const iso = isoMatch ? isoMatch[0] : (s || null);
 
-    // 3) fallback to inverter entity last_changed
-    if (!invTimeRaw && invSo && invSo.last_changed) {
-      invTimeRaw = invSo.last_changed;
-    }
+    const invTimeLabel = iso ? this._formatTimeForUI(iso).toUpperCase() : '--';
 
-    // normalize and format
-    let invTimeLabel = '--';
-    if (invTimeRaw) {
-      const isoLike = (typeof invTimeRaw === 'string') && /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(invTimeRaw);
-      invTimeLabel = isoLike ? this._formatTimeForUI(invTimeRaw) : String(invTimeRaw);
-      invTimeLabel = String(invTimeLabel).toUpperCase();
-    }
-
-    // expose on config for templates or later DOM updates
     c.inverter_time_display = invTimeLabel;
-    c.inverter_time_display_raw = invTimeRaw;
+    c.inverter_time_display_raw = iso;
 
-    // write to DOM (defensive)
     const invTimeEl = this._q('#invTime') || document.getElementById('invTime');
     if (invTimeEl) {
-      invTimeEl.textContent = invTimeLabel || '--';
-      invTimeEl.title = invTimeLabel || '--';
-      invTimeEl.setAttribute('data-raw', invTimeRaw == null ? '' : String(invTimeRaw));
-      invTimeEl.style.color = c.inverter_time_display_color || '#7fa3c4';
-      invTimeEl.setAttribute('aria-label', invTimeLabel || (invTimeRaw == null ? '--' : String(invTimeRaw)));
+      invTimeEl.textContent = invTimeLabel;
+      invTimeEl.title = invTimeLabel;
+      invTimeEl.setAttribute('data-raw', iso || '');
     } else {
-      this._setTxt('#invTime', invTimeLabel || '--');
+      this._setTxt('#invTime', invTimeLabel);
     }
   }
 
