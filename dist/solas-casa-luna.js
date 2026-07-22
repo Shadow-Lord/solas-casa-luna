@@ -1,4 +1,4 @@
-// v2.0.51 stable · build no.101
+// v2.0.52 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.51';
+const VERSION = '2.0.52';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1655,7 +1655,7 @@ _computeAndRenderInverterTime(c) {
     const invEl = this._q('#invState') || document.getElementById('invState');
     if (invEl) {
         invEl.textContent = invDisplay.label || '--';
-        invEl.style.color = invDisplay.color || '#9aa6b2';
+        invEl.style.color = invDisplay.color || '#39d353';
         invEl.title = (invDisplay.raw == null ? '' : String(invDisplay.raw));
     } else {
         this._setTxt('#invState', invDisplay.label || '--');
@@ -2092,7 +2092,7 @@ _computeAndRenderInverterTime(c) {
         title="${esc(c.inverter_time_display || '--')}"
         style="font-size:${Number(c.sz_invtime) || 13}px;
                font-weight:650;
-               color:${c.inverter_time_display_color || '#7fa3c4'};
+               color:${c.inverter_time_display_color || '#39d353'};
                text-align:right;
                overflow:hidden;
                text-overflow:ellipsis;
