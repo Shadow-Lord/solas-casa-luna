@@ -1,4 +1,4 @@
-// v2.0.50 stable · build no.101
+// v2.0.51 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.50';
+const VERSION = '2.0.51';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1058,6 +1058,60 @@ class CasaLuna extends HTMLElement {
     return { raw: rawState, code, label, color };
   }
 
+// format an ISO/timestamp to localized HH:MM:SS
+_formatTimeForUI(dt) {
+  try {
+    const date = new Date(dt);
+    if (Number.isNaN(date.getTime())) return String(dt);
+    const lang = this._lang || navigator.language || 'en';
+    return date.toLocaleTimeString(lang, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  } catch (e) {
+    return String(dt);
+  }
+}
+
+// compute and render inverter time using ONLY c.inverter_time
+_computeAndRenderInverterTime(c) {
+  let raw = null;
+
+  // If inverter_time looks like an entity id, read its state
+  if (typeof c.inverter_time === 'string' &&
+      /^[a-z0-9_]+\.[a-z0-9_]+$/i.test(c.inverter_time) &&
+      typeof this._st === 'function') {
+    raw = this._st(c.inverter_time);
+  } else {
+    // Otherwise treat inverter_time as a literal value
+    raw = c.inverter_time;
+  }
+
+  const s = raw == null ? '' : String(raw);
+
+  // Extract ISO timestamp if present
+  const isoMatch = s.match(
+    /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2}|Z)?/
+  );
+  const iso = isoMatch ? isoMatch[0] : null;
+
+  const label = iso ? this._formatTimeForUI(iso).toUpperCase() : '--';
+
+  // Store ONLY inverter-time display fields
+  c.inverter_time_display = label;
+  c.inverter_time_display_raw = iso;
+
+  // Update ONLY the inverter-time DOM element
+  const el = this._q('#invTime') || document.getElementById('invTime');
+  if (el) {
+    el.textContent = label;
+    el.title = label;
+    el.setAttribute('data-raw', iso || '');
+  } else {
+    this._setTxt('#invTime', label);
+  }
+}
 
   /* ── demo-mode: synthetic state for a missing/unavailable entity. Stable
      per-id (hashed seed), domain- and keyword-aware so values look plausible
@@ -1607,6 +1661,8 @@ class CasaLuna extends HTMLElement {
         this._setTxt('#invState', invDisplay.label || '--');
     }
 
+    this._computeAndRenderInverterTime(c);
+
     const css = this._styles();
 
     /* header (open zone) — hardcoded title/subtitle, weather as HTML */
@@ -2024,10 +2080,27 @@ class CasaLuna extends HTMLElement {
         <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_state || 'INV STATE')}</span>
         <span class="val" id="invState" data-entity="${c.inverter_state || ''}" style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${c.inverter_state_display_color || '#39d353'};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.inverter_state_display || '--'}</span>
       </div>
-      <div style="position:absolute;left:16px;right:14px;top:82px;display:flex;align-items:center;justify-content:space-between;gap:4px">
-        <span id="invTimeLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_time || 'INV TIME')}</span>
-        <span class="val" id="invTime" data-entity="${c.inverter_time || ''}" style="font-size:${Number(c.sz_invtime) || 13}px;font-weight:650;color:#39d353;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.inverter_time || '--'}</span>
-      </div>
+<div style="position:absolute;left:16px;right:14px;top:82px;display:flex;align-items:center;justify-content:space-between;gap:4px">
+  <span id="invTimeLbl"
+        style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">
+    ${esc(c.label_inverter_time || 'INV TIME')}
+  </span>
+
+  <span class="val"
+        id="invTime"
+        data-entity="${esc(c.inverter_time || '')}"
+        title="${esc(c.inverter_time_display || '--')}"
+        style="font-size:${Number(c.sz_invtime) || 13}px;
+               font-weight:650;
+               color:${c.inverter_time_display_color || '#7fa3c4'};
+               text-align:right;
+               overflow:hidden;
+               text-overflow:ellipsis;
+               white-space:nowrap"
+        aria-label="${esc(c.inverter_time_display || (c.inverter_time_display_raw || '--'))}">
+    ${esc(c.inverter_time_display || '--')}
+  </span>
+</div>
     </div>`;
     const [cx0, cy0, cw0, ch0] = SL.r_cyl;
     const cylinder = `
