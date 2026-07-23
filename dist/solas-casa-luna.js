@@ -1,4 +1,4 @@
-// v2.0.52 stable · build no.101
+// v2.0.53 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.52';
+const VERSION = '2.0.53';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2199,6 +2199,15 @@ _computeAndRenderInverterTime(c) {
     <div class="box" id="battFlip" style="left:${sx0}px;top:${sy0}px;width:${sw0}px;height:${sh0}px;${c._show_battstats ? "" : "display:none"}">
       <!-- FRONT: full battery stat rows -->
       <div id="battFaceFront" style="position:absolute;inset:0">
+        <!-- Left label -->
+        <div style="position:absolute;left:10px;top:8px;
+                    font-size:12px;font-weight:700;
+                    color:#7fa3c4;letter-spacing:.05em;
+                    text-transform:uppercase;">
+          BATTERY
+        </div>
+
+        <!-- Right flip button -->
         <div class="flipbtn" id="battFlipBtn" style="right:10px;top:8px">↻</div>
         ${statRows}
       </div>
