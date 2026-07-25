@@ -1,4 +1,4 @@
-// v2.0.56 stable · build no.101
+// v2.0.57 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.56';
+const VERSION = '2.0.57';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -5120,7 +5120,7 @@ _computeAndRenderInverterTime(c) {
       const hhmm = (d) => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       const tMid = new Date(now.getTime() - 12 * 3600000);
       const tStart = new Date(now.getTime() - 24 * 3600000);
-      const ty = h - 0.5;
+      const ty = h + 4.5;
       mk('text', { x: x0, y: ty, 'text-anchor': 'start', 'font-size': '7.5', fill: '#6f90ac' }, hhmm(tStart));
       mk('text', { x: x0 + plotW / 2, y: ty, 'text-anchor': 'middle', 'font-size': '7.5', fill: '#6f90ac' }, hhmm(tMid));
       mk('text', { x: w - 2, y: ty, 'text-anchor': 'end', 'font-size': '7.5', fill: '#6f90ac' }, 'now');
