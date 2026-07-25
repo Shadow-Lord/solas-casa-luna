@@ -1,4 +1,4 @@
-// v2.0.55 stable · build no.101
+// v2.0.56 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.55';
+const VERSION = '2.0.56';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -448,8 +448,8 @@ const LANG = {
 /* ── canonical geometry (measured from template, scaled 1536→1500) ── */
 const SL = {
   nav:  { x:20, w:211, h:77, tops:[146,229,312,395,478,561,644,727,810] },
-  r_cyl:[1113,86,152,284], r_stats:[1275,136,208,237], r_mode:[1275,20,208,104],
-  r_pvtile:[1113,384,369,50], r_ev:[1113,436,369,50], r_cons:[1113,488,369,123], r_prod:[1113,613,369,123], r_events:[1113,738,369,141],
+  r_cyl:[1113,86,152,287], r_stats:[1275,136,208,237], r_mode:[1275,20,208,104],
+  r_pvtile:[1113,384,369,50], r_ev:[1113,436,369,50], r_cons:[1113,445,369,123], r_prod:[1113,580,369,123], r_events:[1113,715,369,141],
   pv:[323,575,360,33], pwr:[720,575,355,33],
   stat_cont:[297,619,799,131],
   stat:{ y:630,h:107,w:180,xs:[309,508,707,906] },
@@ -2167,7 +2167,7 @@ _computeAndRenderInverterTime(c) {
         const tap = ent ? ` data-entity="${ent}"` : '';
 
         const baseLblSz = Number(c.sz_batbox_label) || 12;
-        const baseValSz = Number(c.sz_batbox_value) || 17;
+        const baseValSz = Number(c.sz_batbox_value) || 15;
 
         // Detect multi-value rows: "X | Y"
         const rawVal = this._st && ent ? this._st(ent) : null;
