@@ -1,4 +1,4 @@
-// v2.0.59 stable · build no.101
+// v2.0.60 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.59';
+const VERSION = '2.0.60';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1432,7 +1432,7 @@ _computeAndRenderInverterTime(c) {
       .collapsible:not(.collapsed) .tileFrontLayer { opacity:1; pointer-events:auto; }
       .tileTabLayer { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; }
       .tileTabLbl { font-size:11px; font-weight:800; letter-spacing:.08em; writing-mode:vertical-rl; text-orientation:mixed; }
-      .tabChevIcon { font-size:12px; color:#7fa3c4; }
+      .tabChevIcon { font-size:15px; color:#7fa3c4; }
       .collapseBtn { position:absolute; width:18px; height:18px; border-radius:50%; z-index:6; cursor:pointer;
         background:rgba(20,40,70,.65); border:1px solid rgba(150,200,255,.45); color:#a8cae6; font-size:15px; font-weight:700;
         display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.4); }
@@ -1477,12 +1477,12 @@ _computeAndRenderInverterTime(c) {
       .stattile .val { font-family:'Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif; }
       /* nav slide-panel: opens from nav rail's right edge, fills the MIDDLE zone only
          (right column stays visible). Vertical: below header → PV/PWR bar. */
-      .detail { position:absolute; left:231px; top:130px;
+      .detail { position:absolute; left:237px; top:130px;
         width:869px; height:768px;
         display:none; z-index:40;
         background:linear-gradient(135deg,rgba(12,28,52,.975),rgba(8,18,38,.985));
-        border:2px solid rgba(0,200,255,.55); border-left:none;
-        border-radius:0 16px 16px 0;
+        border:2px solid rgba(0,200,255,.55);
+        border-radius:16px 16px 16px 16px;
         box-shadow:0 0 50px rgba(0,180,255,.30),inset 0 1px 0 rgba(120,210,255,.18);
         transform-origin:left center; overflow:hidden; }
       .detail.open { display:block; animation:clPanelIn .28s cubic-bezier(.2,.7,.3,1); }
