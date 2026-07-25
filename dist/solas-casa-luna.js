@@ -1,4 +1,4 @@
-// v2.0.54 stable · build no.101
+// v2.0.55 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.54';
+const VERSION = '2.0.55';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -448,7 +448,7 @@ const LANG = {
 /* ── canonical geometry (measured from template, scaled 1536→1500) ── */
 const SL = {
   nav:  { x:20, w:211, h:77, tops:[146,229,312,395,478,561,644,727,810] },
-  r_cyl:[1113,92,152,288], r_stats:[1275,136,208,237], r_mode:[1275,25,208,104],
+  r_cyl:[1113,86,152,284], r_stats:[1275,136,208,237], r_mode:[1275,20,208,104],
   r_pvtile:[1113,384,369,50], r_ev:[1113,436,369,50], r_cons:[1113,488,369,123], r_prod:[1113,613,369,123], r_events:[1113,738,369,141],
   pv:[323,575,360,33], pwr:[720,575,355,33],
   stat_cont:[297,619,799,131],
@@ -2074,33 +2074,16 @@ _computeAndRenderInverterTime(c) {
     <div id="statusIcons"></div>
     <div class="box" style="left:${mx}px;top:${my}px;width:${mw}px;height:${mh}px">
       <div class="lbl" style="position:absolute;left:16px;top:11px">BATTERY MODE</div>
-      <div class="val" id="modeVal" style="position:absolute;left:16px;top:33px;font-size:${Number(c.sz_mode) || 17}px;color:#22c3ff">--</div>
-      <div style="position:absolute;left:14px;right:14px;top:66px;height:1px;background:rgba(150,200,255,.18)"></div>
-      <div style="position:absolute;left:16px;right:14px;top:72px;display:flex;align-items:center;justify-content:space-between;gap:4px">
+      <div class="val" id="modeVal" style="position:absolute;left:16px;top:30px;font-size:${Number(c.sz_mode) || 17}px;color:#22c3ff">--</div>
+      <div style="position:absolute;left:14px;right:14px;top:60px;height:1px;background:rgba(150,200,255,.18)"></div>
+      <div style="position:absolute;left:16px;right:14px;top:66px;display:flex;align-items:center;justify-content:space-between;gap:4px">
         <span id="invStateLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_state || 'INV STATE')}</span>
         <span class="val" id="invState" data-entity="${c.inverter_state || ''}" style="font-size:${Number(c.sz_invstate) || 13}px;font-weight:650;color:${c.inverter_state_display_color || '#39d353'};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.inverter_state_display || '--'}</span>
       </div>
-<div style="position:absolute;left:16px;right:14px;top:82px;display:flex;align-items:center;justify-content:space-between;gap:4px">
-  <span id="invTimeLbl"
-        style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">
-    ${esc(c.label_inverter_time || 'INV TIME')}
-  </span>
-
-  <span class="val"
-        id="invTime"
-        data-entity="${esc(c.inverter_time || '')}"
-        title="${esc(c.inverter_time_display || '--')}"
-        style="font-size:${Number(c.sz_invtime) || 13}px;
-               font-weight:650;
-               color:${c.inverter_time_display_color || '#39d353'};
-               text-align:right;
-               overflow:hidden;
-               text-overflow:ellipsis;
-               white-space:nowrap"
-        aria-label="${esc(c.inverter_time_display || (c.inverter_time_display_raw || '--'))}">
-    ${esc(c.inverter_time_display || '--')}
-  </span>
-</div>
+    <div style="position:absolute;left:16px;right:14px;top:76px;display:flex;align-items:center;justify-content:space-between;gap:4px">
+      <span id="invTimeLbl" style="font-size:11px;color:#7fa3c4;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">${esc(c.label_inverter_time || 'INV TIME')}</span>
+      <span class="val" id="invTime" data-entity="${esc(c.inverter_time || '')}" title="${esc(c.inverter_time_display || '--')}" style="font-size:${Number(c.sz_invtime) || 13}px; font-weight:650; color:${c.inverter_time_display_color || '#39d353'}; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" aria-label="${esc(c.inverter_time_display || (c.inverter_time_display_raw || '--'))}">${esc(c.inverter_time_display || '--')}</span>
+    </div>
     </div>`;
     const [cx0, cy0, cw0, ch0] = SL.r_cyl;
     const cylinder = `
@@ -2179,22 +2162,51 @@ _computeAndRenderInverterTime(c) {
     const headH = 22;
     const rowH = (sh0 - headH - 8) / statRowDefs.length;
     const statRows = statRowDefs.map(([id, l, vc, ent], k) => {
-      const rowTop = headH + k * rowH;
-      const midY = rowTop + rowH / 2;
-      const tap = ent ? ` data-entity="${ent}"` : '';
-      /* bCtmp/bCv can show "X | Y unit" (dual temp sensors / min|max cell volt) — the only
-         2 of the 6 rows where content can outgrow the fixed-width value column. Smaller
-         font here avoids the ellipsis-clipping seen in longer-label languages. */
-      const baseSz = Number(c.sz_batbox_value) || 17;
-      const baseLblSz = Number(c.sz_batbox_label) || 12;
-      const dualRow = id === 'bCtmp' || id === 'bCv';
-      const lblSz = dualRow ? Math.max(9, baseLblSz - 2) : baseLblSz;
-      const valSz = dualRow ? Math.max(11, baseSz - 5) : baseSz;
-      return `<div${tap} style="position:absolute;left:16px;right:14px;top:${midY - 9}px;display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-        <span id="${id}Lbl" style="font-size:${lblSz}px;color:#a8cae6;white-space:nowrap;flex-shrink:0">${esc(l)}</span>
-        <span class="val" id="${id}" style="font-size:${valSz}px;color:${vc};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">--</span>
+        const rowTop = headH + k * rowH;
+        const midY = rowTop + rowH / 2;
+        const tap = ent ? ` data-entity="${ent}"` : '';
+
+        const baseLblSz = Number(c.sz_batbox_label) || 12;
+        const baseValSz = Number(c.sz_batbox_value) || 17;
+
+        // Detect multi-value rows: "X | Y"
+        const rawVal = this._st && ent ? this._st(ent) : null;
+        const valStr = rawVal == null ? '--' : String(rawVal);
+        const multi = valStr.includes('|');
+
+        if (multi) {
+            // Centered stacked layout
+            return `
+      <div${tap} style="position:absolute;left:16px;right:14px;top:${rowTop}px;
+                        display:flex;flex-direction:column;align-items:center;gap:2px">
+        <span id="${id}Lbl"
+              style="font-size:${baseLblSz}px;color:#a8cae6;white-space:nowrap;text-align:center">
+          ${esc(l)}
+        </span>
+        <span class="val" id="${id}"
+              style="font-size:${baseValSz}px;color:${vc};
+                     text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          ${esc(valStr)}
+        </span>
       </div>`;
+        }
+
+        // Normal single-value row (unchanged layout)
+        return `
+    <div${tap} style="position:absolute;left:16px;right:14px;top:${midY - 9}px;
+                      display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+      <span id="${id}Lbl"
+            style="font-size:${baseLblSz}px;color:#a8cae6;white-space:nowrap;flex-shrink:0">
+        ${esc(l)}
+      </span>
+      <span class="val" id="${id}"
+            style="font-size:${baseValSz}px;color:${vc};
+                   text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+        ${esc(valStr)}
+      </span>
+    </div>`;
     }).join('');
+
     const battStats = `
     <div class="box" id="battFlip" style="left:${sx0}px;top:${sy0}px;width:${sw0}px;height:${sh0}px;${c._show_battstats ? "" : "display:none"}">
       <!-- FRONT: full battery stat rows -->
