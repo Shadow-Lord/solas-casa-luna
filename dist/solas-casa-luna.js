@@ -1,4 +1,4 @@
-// v2.0.58 stable · build no.101
+// v2.0.59 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.58';
+const VERSION = '2.0.59';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1434,7 +1434,7 @@ _computeAndRenderInverterTime(c) {
       .tileTabLbl { font-size:11px; font-weight:800; letter-spacing:.08em; writing-mode:vertical-rl; text-orientation:mixed; }
       .tabChevIcon { font-size:12px; color:#7fa3c4; }
       .collapseBtn { position:absolute; width:18px; height:18px; border-radius:50%; z-index:6; cursor:pointer;
-        background:rgba(20,40,70,.65); border:1px solid rgba(150,200,255,.45); color:#a8cae6; font-size:11px; font-weight:700;
+        background:rgba(20,40,70,.65); border:1px solid rgba(150,200,255,.45); color:#a8cae6; font-size:15px; font-weight:700;
         display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.4); }
       .collapseBtn:active { transform:scale(.88); }
       .navtile.collapsible { transition:transform .34s ease, opacity .28s ease; }
@@ -1686,7 +1686,7 @@ _computeAndRenderInverterTime(c) {
       <div id="hWind" style="position:absolute;left:252px;top:104px;font-size:14px;color:#a8cae6;font-family:'Segoe UI',Roboto,'Helvetica Neue',system-ui,sans-serif"></div>
       <!-- Hardcoded metallic title -->
       <div style="position:absolute;left:0;top:0;width:${VB_W}px;text-align:center;pointer-events:none">
-        <div style="margin-top:8px;line-height:1;font-family:'Bahnschrift','Arial Narrow','Franklin Gothic Medium','Segoe UI',Impact,sans-serif;font-size:70px;font-weight:900;
+        <div style="margin-top:8px;line-height:1;font-family:'Bahnschrift','Arial Narrow','Franklin Gothic Medium','Segoe UI',Impact,sans-serif;font-size:57px;font-weight:900;
           letter-spacing:16px;text-align:center;
           background:linear-gradient(180deg,#ffffff 0%,#dce5ef 30%,#8ba3bc 50%,#b0c4de 75%,#556e89 100%);
           -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
@@ -1982,7 +1982,7 @@ _computeAndRenderInverterTime(c) {
       const col = '#7ce05a';
       const chartH = h - 38;
       const front = `<div class="val" style="position:absolute;left:14px;top:10px;font-size:14px">${c.label_today_production || this._t("TODAY'S PRODUCTION")}</div>
-        <div class="val val-fit" id="prTotal" style="position:absolute;right:14px;top:10px;max-width:150px;text-align:right;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
+        <div class="val val-fit" id="prTotal" style="position:absolute;right:30px;top:10px;max-width:150px;text-align:right;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
         <div class="well" style="position:absolute;left:12px;top:32px;width:${w - 24}px;height:${chartH}px"></div>
         <svg id="prChart" style="position:absolute;left:12px;top:32px;width:${w - 24}px;height:${chartH}px">
           <defs><linearGradient id="prFillGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1991,7 +1991,7 @@ _computeAndRenderInverterTime(c) {
           <path class="fill" fill="url(#prFillGrad)" stroke="none"/>
           <path fill="none" stroke="${col}" stroke-width="2"/></svg>`;
       return `<div class="box collapsible" data-collapse-id="prod" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;overflow:hidden;background:var(--cl-box-bg,rgba(0,0,0,.35))">
-        ${collapsibleInner('prod', front, 'PROD', col, 'bottom:8px;right:8px')}
+        ${collapsibleInner('prod', front, 'PROD', col, 'top:4px;right:4px')}
       </div>`;
     };
     const prod = prodBox(SL.r_prod);
@@ -2025,7 +2025,7 @@ _computeAndRenderInverterTime(c) {
       const col = '#46bcff';
       const chartH = h - 38;
       const front = `<div class="val" style="position:absolute;left:14px;top:10px;font-size:14px">${c.label_today_consumption || this._t("TODAY'S CONSUMPTION")}</div>
-        <div class="val val-fit" id="cnTotal" style="position:absolute;right:14px;top:10px;max-width:150px;text-align:right;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
+        <div class="val val-fit" id="cnTotal" style="position:absolute;right:30px;top:10px;max-width:150px;text-align:right;font-size:${Number(c.sz_prodcons_total)||15}px;color:${col}">--</div>
         <div class="well" style="position:absolute;left:12px;top:32px;width:${w-24}px;height:${chartH}px"></div>
         <svg id="cnChart" style="position:absolute;left:12px;top:32px;width:${w-24}px;height:${chartH}px">
           <defs><linearGradient id="cnFillGrad" x1="0" y1="0" x2="0" y2="1">
@@ -2034,7 +2034,7 @@ _computeAndRenderInverterTime(c) {
           <path class="fill" fill="url(#cnFillGrad)" stroke="none"/>
           <path fill="none" stroke="${col}" stroke-width="2"/></svg>`;
       return `<div class="box collapsible" data-collapse-id="cons" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;overflow:hidden;background:var(--cl-box-bg,rgba(0,0,0,.35))">
-        ${collapsibleInner('cons', front, 'HOME', col, 'bottom:8px;right:8px')}
+        ${collapsibleInner('cons', front, 'HOME', col, 'top:4px;right:4px')}
       </div>`;
     };
     const cons = consBox(SL.r_cons);
