@@ -1,4 +1,4 @@
-// v2.0.60 stable · build no.101
+// v2.0.61 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.60';
+const VERSION = '2.0.61';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -453,8 +453,8 @@ const SL = {
   pv:[323,575,360,33], pwr:[720,575,355,33],
   stat_cont:[297,619,799,131],
   stat:{ y:630,h:107,w:180,xs:[309,508,707,906] },
-  inv_box:[299,762,209,136],
-  inv_right:[509,762,585,136],
+  inv_box:[297,762,200,136],
+  inv_right:[509,762,586,136],
   donut_c:[556,786,87,106],
   invt:{ y:781,h:107,w:122,xs:[687,823,959] },
   bot:{ y:917,h:75,w:182,xs:[156,357,558,759,960,1161] },
