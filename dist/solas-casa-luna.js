@@ -1,4 +1,4 @@
-// v2.0.71 stable · build no.101
+// v2.0.72 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.71';
+const VERSION = '2.0.72';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2439,11 +2439,13 @@ async _loadStatistics(entityId, hours = 24) {
 
     /* ── Pricing Engine (Solis 10‑minute statistics with deltas) ───────────── */
 
-    // Midnight reset guard — STOP pricing engine
+    // HARD MIDNIGHT RESET — STOP PRICING ENGINE COMPLETELY
     if (Number(c.grid_import_today) === 0) {
         c.cost_import_day = 0;
         c.cost_export_day = 0;
-        return;
+        c.cost_import_total = 0;
+        c.cost_export_total = 0;
+        return;   // <-- THIS IS THE CRITICAL FIX
     }
 
     // Initialize values so euro() never receives undefined
