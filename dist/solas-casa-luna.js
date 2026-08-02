@@ -1,4 +1,4 @@
-// v2.0.74 stable · build no.101
+// v2.0.75 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.74';
+const VERSION = '2.0.75';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2439,17 +2439,20 @@ async _loadStatistics(entityId, hours = 24) {
 
 /* ── Pricing Engine (Solis 10‑minute statistics with TODAY filter) ───────────── */
 
-    // Correct midnight reset logic using mapped variables
+    // Midnight reset logic using mapped variables
     const importToday = Number(c.grid_import_today) || 0;
     const exportToday = Number(c.grid_export_energy) || 0;
 
-    // If BOTH import and export have reset → true midnight → stop pricing engine
+    // We NEVER return from _build() — we only skip pricing
+    let skipPricing = false;
+
+    // TRUE MIDNIGHT RESET — both import & export reset
     if (importToday === 0 && exportToday === 0) {
         c.cost_import_day = 0;
         c.cost_export_day = 0;
         c.cost_import_total = 0;
         c.cost_export_total = 0;
-        return;   // prevents reprocessing yesterday's statistics
+        skipPricing = true;   // <-- SAFE: dashboard still loads
     }
 
     // If ONLY import reset → reset import cost only
@@ -2463,10 +2466,10 @@ async _loadStatistics(entityId, hours = 24) {
     }
 
     // Initialize values so euro() never receives undefined
-    c.cost_import_day = 0;
-    c.cost_export_day = 0;
-    c.cost_import_total = 0;
-    c.cost_export_total = 0;
+    c.cost_import_day = c.cost_import_day || 0;
+    c.cost_export_day = c.cost_export_day || 0;
+    c.cost_import_total = c.cost_import_total || 0;
+    c.cost_export_total = c.cost_export_total || 0;
 
     const runPricing = async () => {
 
@@ -2510,13 +2513,12 @@ async _loadStatistics(entityId, hours = 24) {
 
         let costImportDay = 0;
 
-        // Statistics MUST use the real Solis sensor
+        // ✔ Fully configurable — uses your dashboard variable
         const impHistRaw = await this._loadStatistics(
             c.grid_import_today,
             24
         );
 
-        // Convert cumulative Solis values into per‑interval deltas (TODAY ONLY)
         const today = new Date().toDateString();
         const impHist = [];
 
@@ -2551,19 +2553,22 @@ async _loadStatistics(entityId, hours = 24) {
         c.cost_export_day = exportToday * exportPrice;
 
         /* TOTAL COSTS — using mapped variables */
-        const importPriceFlat = importWindows.length ? Math.max(...importWindows.map(w => w.price)) : 0;
+        const importPriceFlat = importWindows.length
+            ? Math.max(...importWindows.map(w => w.price))
+            : 0;
 
         c.cost_import_total = (Number(c.total_import) || 0) * importPriceFlat;
-
         c.cost_export_total = (Number(c.total_export) || 0) * exportPrice;
 
         this.requestUpdate?.();
     };
 
-    runPricing();
+    // SAFE: only run pricing if not skipping
+    if (!skipPricing) {
+        runPricing();
+    }
 
-    /* ───────────────────────────────────────────────────────────── */
-
+/* ───────────────────────────────────────────────────────────── */
     this.shadowRoot.innerHTML = `
       <style>${css}</style>
       <div class="stage">
