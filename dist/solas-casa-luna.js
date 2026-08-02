@@ -1,4 +1,4 @@
-// v2.0.64 stable · build no.101
+// v2.0.65 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.64';
+const VERSION = '2.0.65';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2413,14 +2413,14 @@ _computeAndRenderInverterTime(c) {
         ${collapsibleInner('ev', evFront, 'EV', '#00aaff', 'bottom:4px;right:4px')}
       </div>` : '';
 
-    /* ── Pricing Engine ─────────────────────────────────────────── */
+    /* ── Pricing Engine (Solis 10‑minute statistics) ───────────────── */
 
     function toMinutes(t) {
         const [h, m] = t.split(':').map(Number);
         return h * 60 + m;
     }
 
-    // Load import windows
+    // Build import windows
     const n = Number(c.import_rate_count) || 0;
     const importWindows = [];
 
@@ -2438,40 +2438,54 @@ _computeAndRenderInverterTime(c) {
         }
     }
 
-    // Export price
+    // Export price (flat)
     const exportPrice = Number(c.export_price) || 0;
 
-    // Determine price for a given minute
+    // Determine price for a given minute of the day
     function priceForMinute(minute) {
         for (const w of importWindows) {
             if (w.start <= w.end) {
+                // normal window (e.g. 02:00 → 06:00)
                 if (minute >= w.start && minute < w.end) return w.price;
             } else {
+                // wrap‑around window (e.g. 06:00 → 02:00)
                 if (minute >= w.start || minute < w.end) return w.price;
             }
         }
         return 0;
     }
 
-    /* DAILY IMPORT COST */
+    /* DAILY IMPORT COST (10‑minute Solis statistics) */
+
     let costImportDay = 0;
-    const impHist = this._st('sensor.grid_import_history') || [];
+
+    // Pull 24 hours of Solis import statistics (10‑minute buckets)
+    const impHist = this._getStatistics(
+        'sensor.solis_inverter_1031040229230153_solis_daily_grid_energy_purchased',
+        24
+    ) || [];
 
     for (const entry of impHist) {
-        const ts = new Date(entry.timestamp);
+        const ts = new Date(entry.start);
         const mins = ts.getHours() * 60 + ts.getMinutes();
         const price = priceForMinute(mins);
-        costImportDay += entry.kwh * price;
+
+        // Solis statistics use "sum" for the kWh in that bucket
+        const kwh = entry.sum || 0;
+
+        costImportDay += kwh * price;
     }
 
     c.cost_import_day = costImportDay;
 
-    /* DAILY EXPORT COST */
-    c.cost_export_day = (c.grid_export_today || 0) * exportPrice;
+    /* DAILY EXPORT COST (flat rate) */
+    c.cost_export_day = (Number(c.grid_export_energy) || 0) * exportPrice;
 
-    /* TOTAL COSTS */
-    c.cost_import_total = (c.total_import || 0) * exportPrice;
-    c.cost_export_total = (c.total_export || 0) * exportPrice;
+    /* TOTAL COSTS (flat rate) */
+    const importPriceFlat = importWindows.length ? Math.max(...importWindows.map(w => w.price)) : 0;
+
+    c.cost_import_total = (Number(c.total_import) || 0) * importPriceFlat;
+    c.cost_export_total = (Number(c.total_export) || 0) * exportPrice;
 
     /* ───────────────────────────────────────────────────────────── */
 
