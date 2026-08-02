@@ -1,4 +1,4 @@
-// v2.0.72 stable · build no.101
+// v2.0.73 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.72';
+const VERSION = '2.0.73';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2437,7 +2437,7 @@ async _loadStatistics(entityId, hours = 24) {
         ${collapsibleInner('ev', evFront, 'EV', '#00aaff', 'bottom:4px;right:4px')}
       </div>` : '';
 
-    /* ── Pricing Engine (Solis 10‑minute statistics with deltas) ───────────── */
+    /* ── Pricing Engine (Solis 10‑minute statistics with TODAY filter) ───────────── */
 
     // HARD MIDNIGHT RESET — STOP PRICING ENGINE COMPLETELY
     if (Number(c.grid_import_today) === 0) {
@@ -2445,7 +2445,7 @@ async _loadStatistics(entityId, hours = 24) {
         c.cost_export_day = 0;
         c.cost_import_total = 0;
         c.cost_export_total = 0;
-        return;   // <-- THIS IS THE CRITICAL FIX
+        return;   // <-- CRITICAL: prevents reprocessing yesterday's statistics
     }
 
     // Initialize values so euro() never receives undefined
@@ -2492,7 +2492,7 @@ async _loadStatistics(entityId, hours = 24) {
             return 0;
         }
 
-        /* DAILY IMPORT COST (10‑minute Solis statistics with deltas) */
+        /* DAILY IMPORT COST (10‑minute Solis statistics with TODAY filter) */
 
         let costImportDay = 0;
 
@@ -2501,14 +2501,21 @@ async _loadStatistics(entityId, hours = 24) {
             24
         );
 
-        // Convert cumulative Solis values into per‑interval deltas
+        // Convert cumulative Solis values into per‑interval deltas (TODAY ONLY)
+        const today = new Date().toDateString();
         const impHist = [];
+
         for (let i = 1; i < impHistRaw.length; i++) {
+            const ts = new Date(impHistRaw[i].start);
+
+            // Ignore statistics from previous day
+            if (ts.toDateString() !== today) continue;
+
             const prev = impHistRaw[i - 1].sum || 0;
             const curr = impHistRaw[i].sum || 0;
             const delta = curr - prev;
 
-            if (delta > 0 && delta < 5) {  // sanity filter
+            if (delta > 0 && delta < 5) {
                 impHist.push({
                     start: impHistRaw[i].start,
                     kwh: delta
@@ -2526,13 +2533,18 @@ async _loadStatistics(entityId, hours = 24) {
         c.cost_import_day = costImportDay;
 
         /* DAILY EXPORT COST */
-        c.cost_export_day = Number(this._st('sensor.solis_inverter_1031040229230153_solis_daily_on_grid_energy') || 0) * exportPrice;
+        c.cost_export_day =
+            Number(this._st('sensor.solis_inverter_1031040229230153_solis_daily_on_grid_energy') || 0)
+            * exportPrice;
 
         /* TOTAL COSTS */
         const importPriceFlat = importWindows.length ? Math.max(...importWindows.map(w => w.price)) : 0;
 
         c.cost_import_total = (Number(c.total_import) || 0) * importPriceFlat;
-        c.cost_export_total = Number(this._st('sensor.solis_inverter_1031040229230153_solis_total_on_grid_energy') || 0) * exportPrice;
+
+        c.cost_export_total =
+            Number(this._st('sensor.solis_inverter_1031040229230153_solis_total_on_grid_energy') || 0)
+            * exportPrice;
 
         this.requestUpdate?.();
     };
