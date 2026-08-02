@@ -1,4 +1,4 @@
-// v2.0.67 stable · build no.101
+// v2.0.68 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.67';
+const VERSION = '2.0.68';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2437,7 +2437,7 @@ async _loadStatistics(entityId, hours = 24) {
         ${collapsibleInner('ev', evFront, 'EV', '#00aaff', 'bottom:4px;right:4px')}
       </div>` : '';
 
-    /* ── Pricing Engine (Solis 10‑minute statistics) ───────────────── */
+    /* ── Pricing Engine (Solis 10‑minute statistics with deltas) ───────────── */
 
     // Initialize values so euro() never receives undefined
     c.cost_import_day = 0;
@@ -2483,21 +2483,35 @@ async _loadStatistics(entityId, hours = 24) {
             return 0;
         }
 
-        /* DAILY IMPORT COST (10‑minute Solis statistics) */
+        /* DAILY IMPORT COST (10‑minute Solis statistics with deltas) */
 
         let costImportDay = 0;
 
-        const impHist = await this._loadStatistics(
+        const impHistRaw = await this._loadStatistics(
             'sensor.solis_inverter_1031040229230153_solis_daily_grid_energy_purchased',
             24
         );
+
+        // Convert cumulative Solis values into per‑interval deltas
+        const impHist = [];
+        for (let i = 1; i < impHistRaw.length; i++) {
+            const prev = impHistRaw[i - 1].sum || 0;
+            const curr = impHistRaw[i].sum || 0;
+            const delta = curr - prev;
+
+            if (delta > 0 && delta < 5) {  // sanity filter
+                impHist.push({
+                    start: impHistRaw[i].start,
+                    kwh: delta
+                });
+            }
+        }
 
         for (const entry of impHist) {
             const ts = new Date(entry.start);
             const mins = ts.getHours() * 60 + ts.getMinutes();
             const price = priceForMinute(mins);
-            const kwh = entry.sum || 0;
-            costImportDay += kwh * price;
+            costImportDay += entry.kwh * price;
         }
 
         c.cost_import_day = costImportDay;
