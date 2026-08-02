@@ -1,4 +1,4 @@
-// v2.0.63 stable · build no.101
+// v2.0.64 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.63';
+const VERSION = '2.0.64';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2455,7 +2455,7 @@ _computeAndRenderInverterTime(c) {
 
     /* DAILY IMPORT COST */
     let costImportDay = 0;
-    const impHist = st('sensor.grid_import_history') || [];
+    const impHist = this._st('sensor.grid_import_history') || [];
 
     for (const entry of impHist) {
         const ts = new Date(entry.timestamp);
