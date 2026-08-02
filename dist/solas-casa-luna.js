@@ -1,4 +1,4 @@
-// v2.0.68 stable · build no.101
+// v2.0.69 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.68';
+const VERSION = '2.0.69';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2517,13 +2517,13 @@ async _loadStatistics(entityId, hours = 24) {
         c.cost_import_day = costImportDay;
 
         /* DAILY EXPORT COST */
-        c.cost_export_day = (Number(c.grid_export_energy) || 0) * exportPrice;
+        c.cost_export_day = Number(this._st('sensor.solis_inverter_1031040229230153_solis_daily_on_grid_energy') || 0) * exportPrice;
 
         /* TOTAL COSTS */
         const importPriceFlat = importWindows.length ? Math.max(...importWindows.map(w => w.price)) : 0;
 
         c.cost_import_total = (Number(c.total_import) || 0) * importPriceFlat;
-        c.cost_export_total = (Number(c.total_export) || 0) * exportPrice;
+        c.cost_export_total = Number(this._st('sensor.solis_inverter_1031040229230153_solis_total_on_grid_energy') || 0) * exportPrice;
 
         this.requestUpdate?.();
     };
