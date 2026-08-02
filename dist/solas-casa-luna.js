@@ -1,4 +1,4 @@
-// v2.0.66 stable · build no.101
+// v2.0.67 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.66';
+const VERSION = '2.0.67';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2439,6 +2439,12 @@ async _loadStatistics(entityId, hours = 24) {
 
     /* ── Pricing Engine (Solis 10‑minute statistics) ───────────────── */
 
+    // Initialize values so euro() never receives undefined
+    c.cost_import_day = 0;
+    c.cost_export_day = 0;
+    c.cost_import_total = 0;
+    c.cost_export_total = 0;
+
     const runPricing = async () => {
 
         function toMinutes(t) {
@@ -2505,7 +2511,6 @@ async _loadStatistics(entityId, hours = 24) {
         c.cost_import_total = (Number(c.total_import) || 0) * importPriceFlat;
         c.cost_export_total = (Number(c.total_export) || 0) * exportPrice;
 
-        // Trigger UI update
         this.requestUpdate?.();
     };
 
