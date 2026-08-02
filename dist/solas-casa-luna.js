@@ -1,4 +1,4 @@
-// v2.0.62 stable · build no.101
+// v2.0.63 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.62';
+const VERSION = '2.0.63';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -680,6 +680,14 @@ class CasaLuna extends HTMLElement {
       _extra_tile_4_enabled: true,  _extra_tile_4_label: 'AC',          _extra_tile_4_entity: '', _extra_tile_4_icon: 'snow',
       _extra_tile_5_enabled: true,  _extra_tile_5_label: 'Lights',      _extra_tile_5_entity: '', _extra_tile_5_icon: 'bulb',
       _extra_tile_6_enabled: true,  _extra_tile_6_label: 'Outlet',      _extra_tile_6_entity: '', _extra_tile_6_icon: 'plug',
+      import_rate_count: 2,
+      import_1_start: '02:00',
+      import_1_end:   '06:00',
+      import_1_price: 0.12,
+      import_2_start: '06:00',
+      import_2_end:   '02:00',
+      import_2_price: 0.38,
+      export_price: 0.24, 
       thresh_temp_warn: 40, thresh_temp_critical: 50,
       thresh_cell_v_low: 3.1, thresh_cell_v_critical: 3.0, thresh_cell_v_high: 3.65,
       thresh_soc_low: 25, thresh_soc_critical: 15,
@@ -2404,6 +2412,68 @@ _computeAndRenderInverterTime(c) {
         overflow:hidden;border-color:rgba(0,170,255,.5)">
         ${collapsibleInner('ev', evFront, 'EV', '#00aaff', 'bottom:4px;right:4px')}
       </div>` : '';
+
+    /* ── Pricing Engine ─────────────────────────────────────────── */
+
+    function toMinutes(t) {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    // Load import windows
+    const n = Number(c.import_rate_count) || 0;
+    const importWindows = [];
+
+    for (let i = 1; i <= n; i++) {
+        const start = c[`import_${i}_start`];
+        const end   = c[`import_${i}_end`];
+        const price = Number(c[`import_${i}_price`]) || 0;
+
+        if (start && end) {
+            importWindows.push({
+                start: toMinutes(start),
+                end:   toMinutes(end),
+                price
+            });
+        }
+    }
+
+    // Export price
+    const exportPrice = Number(c.export_price) || 0;
+
+    // Determine price for a given minute
+    function priceForMinute(minute) {
+        for (const w of importWindows) {
+            if (w.start <= w.end) {
+                if (minute >= w.start && minute < w.end) return w.price;
+            } else {
+                if (minute >= w.start || minute < w.end) return w.price;
+            }
+        }
+        return 0;
+    }
+
+    /* DAILY IMPORT COST */
+    let costImportDay = 0;
+    const impHist = st('sensor.grid_import_history') || [];
+
+    for (const entry of impHist) {
+        const ts = new Date(entry.timestamp);
+        const mins = ts.getHours() * 60 + ts.getMinutes();
+        const price = priceForMinute(mins);
+        costImportDay += entry.kwh * price;
+    }
+
+    c.cost_import_day = costImportDay;
+
+    /* DAILY EXPORT COST */
+    c.cost_export_day = (c.grid_export_today || 0) * exportPrice;
+
+    /* TOTAL COSTS */
+    c.cost_import_total = (c.total_import || 0) * exportPrice;
+    c.cost_export_total = (c.total_export || 0) * exportPrice;
+
+    /* ───────────────────────────────────────────────────────────── */
 
     this.shadowRoot.innerHTML = `
       <style>${css}</style>
@@ -4277,11 +4347,25 @@ _computeAndRenderInverterTime(c) {
       }
       loadEl2.style.color = '#50c8ff';
     }
-    // GRID IMP / GRID EXP tiles
-    this._setTxt('#v_gimp', this._kwhEnt(c.grid_import_today));
+
+    // Euro formatter
+    const euro = v => `€${v.toFixed(2)}`;
+
+    // GRID IMP / GRID EXP tiles with € amounts
+    this._setTxt('#v_gimp',
+        c.grid_import_today
+            ? `${this._kwhEnt(c.grid_import_today)} (${euro(c.cost_import_day)})`
+            : '--'
+    );
     this._setColor('#v_gimp', '#ffb45a');
-    this._setTxt('#v_gexp', c.grid_export_energy ? this._kwhEnt(c.grid_export_energy) : '--');
+
+    this._setTxt('#v_gexp',
+        c.grid_export_energy
+            ? `${this._kwhEnt(c.grid_export_energy)} (${euro(c.cost_export_day)})`
+            : '--'
+    );
     this._setColor('#v_gexp', '#7ce05a');
+
     // BATT CHG / DIS dual tile
     this._setTxt('#v_bchg', this._kwhEnt(c.today_batt_chg));
     this._setTxt('#v_bdis', this._kwhEnt(c.batt_dis));
@@ -5521,7 +5605,7 @@ class CasaLunaEditor extends HTMLElement {
        Implemented by intercepting appendChild so the 25 existing section() calls below
        stay untouched: advanced ones are simply dropped when _show_advanced is off. */
     const ADVANCED_SECTIONS = new Set([
-      'phaseflip', 'ev', 'thresholds', 'appearance', 'textsizes',
+      'phaseflip', 'pricing', 'ev', 'thresholds', 'appearance', 'textsizes',
       'nav_cameras', 'nav_energy', 'nav_plugs', 'nav_battery', 'nav_climate',
       'nav_security', 'nav_automation', 'nav_lighting', 'recent_events', 'nav_system', 'testing'
     ]);
