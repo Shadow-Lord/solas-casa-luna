@@ -1,4 +1,4 @@
-// v2.0.61 stable · build no.101
+// v2.0.62 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.61';
+const VERSION = '2.0.62';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -5689,6 +5689,28 @@ class CasaLunaEditor extends HTMLElement {
         eg('battery2_voltage', 'BATT2 VOLT'),
         eg('battery2_mos', 'BATT2 BMS'),
       ], { sub: true }),
+    ]));
+
+    shell.appendChild(section('pricing', '💶', 'Import / Export Pricing', [
+      info('Configure time‑based import rates and a flat export rate. Supports multiple time windows.'),
+      divider(),
+      info('Import Pricing — multiple time windows allowed'),
+      // Number of windows (user can add more)
+      textField('import_rate_count', 'Number of import windows', '2'),
+      // Window 1
+      textField('import_1_start', 'Window 1 start time (HH:MM)', '02:00'),
+      textField('import_1_end',   'Window 1 end time (HH:MM)',   '06:00'),
+      textField('import_1_price', 'Window 1 price (€/kWh)',      '0.12'),
+      divider(),
+      // Window 2
+      textField('import_2_start', 'Window 2 start time (HH:MM)', '06:00'),
+      textField('import_2_end',   'Window 2 end time (HH:MM)',   '02:00'),
+      textField('import_2_price', 'Window 2 price (€/kWh)',      '0.38'),
+      divider(),
+      info('Add more windows by increasing the count and defining import_3_*, import_4_*, etc.'),
+      divider(),
+      info('Export Pricing — flat rate'),
+      textField('export_price', 'Export price (€/kWh)', '0.24'),
     ]));
 
     shell.appendChild(section('ev', '🚗', 'EV / Car Charger', [
