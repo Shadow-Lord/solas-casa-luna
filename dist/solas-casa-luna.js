@@ -1,4 +1,4 @@
-// v2.0.65 stable · build no.101
+// v2.0.66 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.65';
+const VERSION = '2.0.66';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1119,6 +1119,30 @@ _computeAndRenderInverterTime(c) {
   } else {
     this._setTxt('#invTime', label);
   }
+}
+
+async _loadStatistics(entityId, hours = 24) {
+    const end = new Date();
+    const start = new Date(end.getTime() - hours * 3600 * 1000);
+
+    try {
+        const result = await this._hass.callWS({
+            type: "recorder/statistics_during_period",
+            start_time: start.toISOString(),
+            end_time: end.toISOString(),
+            statistic_ids: [entityId],
+            period: "hour"
+        });
+
+        const stats = result[entityId] || [];
+        return stats.map(s => ({
+            start: s.start,
+            sum: s.sum || 0
+        }));
+    } catch (e) {
+        console.error("Casa Luna: statistics load failed", e);
+        return [];
+    }
 }
 
   /* ── demo-mode: synthetic state for a missing/unavailable entity. Stable
@@ -2415,77 +2439,77 @@ _computeAndRenderInverterTime(c) {
 
     /* ── Pricing Engine (Solis 10‑minute statistics) ───────────────── */
 
-    function toMinutes(t) {
-        const [h, m] = t.split(':').map(Number);
-        return h * 60 + m;
-    }
+    const runPricing = async () => {
 
-    // Build import windows
-    const n = Number(c.import_rate_count) || 0;
-    const importWindows = [];
-
-    for (let i = 1; i <= n; i++) {
-        const start = c[`import_${i}_start`];
-        const end   = c[`import_${i}_end`];
-        const price = Number(c[`import_${i}_price`]) || 0;
-
-        if (start && end) {
-            importWindows.push({
-                start: toMinutes(start),
-                end:   toMinutes(end),
-                price
-            });
+        function toMinutes(t) {
+            const [h, m] = t.split(':').map(Number);
+            return h * 60 + m;
         }
-    }
 
-    // Export price (flat)
-    const exportPrice = Number(c.export_price) || 0;
+        // Build import windows
+        const n = Number(c.import_rate_count) || 0;
+        const importWindows = [];
 
-    // Determine price for a given minute of the day
-    function priceForMinute(minute) {
-        for (const w of importWindows) {
-            if (w.start <= w.end) {
-                // normal window (e.g. 02:00 → 06:00)
-                if (minute >= w.start && minute < w.end) return w.price;
-            } else {
-                // wrap‑around window (e.g. 06:00 → 02:00)
-                if (minute >= w.start || minute < w.end) return w.price;
+        for (let i = 1; i <= n; i++) {
+            const start = c[`import_${i}_start`];
+            const end   = c[`import_${i}_end`];
+            const price = Number(c[`import_${i}_price`]) || 0;
+
+            if (start && end) {
+                importWindows.push({
+                    start: toMinutes(start),
+                    end:   toMinutes(end),
+                    price
+                });
             }
         }
-        return 0;
-    }
 
-    /* DAILY IMPORT COST (10‑minute Solis statistics) */
+        const exportPrice = Number(c.export_price) || 0;
 
-    let costImportDay = 0;
+        function priceForMinute(minute) {
+            for (const w of importWindows) {
+                if (w.start <= w.end) {
+                    if (minute >= w.start && minute < w.end) return w.price;
+                } else {
+                    if (minute >= w.start || minute < w.end) return w.price;
+                }
+            }
+            return 0;
+        }
 
-    // Pull 24 hours of Solis import statistics (10‑minute buckets)
-    const impHist = this._getStatistics(
-        'sensor.solis_inverter_1031040229230153_solis_daily_grid_energy_purchased',
-        24
-    ) || [];
+        /* DAILY IMPORT COST (10‑minute Solis statistics) */
 
-    for (const entry of impHist) {
-        const ts = new Date(entry.start);
-        const mins = ts.getHours() * 60 + ts.getMinutes();
-        const price = priceForMinute(mins);
+        let costImportDay = 0;
 
-        // Solis statistics use "sum" for the kWh in that bucket
-        const kwh = entry.sum || 0;
+        const impHist = await this._loadStatistics(
+            'sensor.solis_inverter_1031040229230153_solis_daily_grid_energy_purchased',
+            24
+        );
 
-        costImportDay += kwh * price;
-    }
+        for (const entry of impHist) {
+            const ts = new Date(entry.start);
+            const mins = ts.getHours() * 60 + ts.getMinutes();
+            const price = priceForMinute(mins);
+            const kwh = entry.sum || 0;
+            costImportDay += kwh * price;
+        }
 
-    c.cost_import_day = costImportDay;
+        c.cost_import_day = costImportDay;
 
-    /* DAILY EXPORT COST (flat rate) */
-    c.cost_export_day = (Number(c.grid_export_energy) || 0) * exportPrice;
+        /* DAILY EXPORT COST */
+        c.cost_export_day = (Number(c.grid_export_energy) || 0) * exportPrice;
 
-    /* TOTAL COSTS (flat rate) */
-    const importPriceFlat = importWindows.length ? Math.max(...importWindows.map(w => w.price)) : 0;
+        /* TOTAL COSTS */
+        const importPriceFlat = importWindows.length ? Math.max(...importWindows.map(w => w.price)) : 0;
 
-    c.cost_import_total = (Number(c.total_import) || 0) * importPriceFlat;
-    c.cost_export_total = (Number(c.total_export) || 0) * exportPrice;
+        c.cost_import_total = (Number(c.total_import) || 0) * importPriceFlat;
+        c.cost_export_total = (Number(c.total_export) || 0) * exportPrice;
+
+        // Trigger UI update
+        this.requestUpdate?.();
+    };
+
+    runPricing();
 
     /* ───────────────────────────────────────────────────────────── */
 
