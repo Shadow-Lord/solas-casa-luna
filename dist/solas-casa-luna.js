@@ -1,4 +1,4 @@
-// v2.0.78 stable · build no.101
+// v2.0.79 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.78';
+const VERSION = '2.0.79';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -821,7 +821,7 @@ class CasaLuna extends HTMLElement {
       sz_batbox_label: 12,
       sz_batbox_value: 17,
       sz_tile_label: 11,
-      sz_tile_value: 21,
+      sz_tile_value: 19,
       sz_prodcons_total: 15,
       sz_pvtile: 14,
       sz_bottile_label: 12,
@@ -1895,9 +1895,9 @@ async _loadStatistics(entityId, hours = 24) {
         <div class="lbl" style="position:absolute;left:0;top:${r1 - 7}px;width:100%;text-align:center;font-size:${Number(c.sz_tile_label) || 11}px;letter-spacing:.05em">${c.label_chg_dis ? esc(c.label_chg_dis) : 'CHG <span style="color:#7fa3c4">/ DIS</span>'}</div>
         <div style="position:absolute;left:0;top:${r2 - iconSz / 2}px;width:100%;display:flex;justify-content:center;align-items:center">${icon('batt', iconSz)}</div>
         <div style="position:absolute;left:0;top:${r3 - 11}px;width:100%;display:flex;justify-content:center;align-items:center;gap:6px">
-          <div class="val val-fit" id="v_bchg" style="font-size:${Math.round((Number(c.sz_tile_value) || 21) * 0.68)}px;color:#7ce05a;max-width:45%;text-align:center">--</div>
+          <div class="val val-fit" id="v_bchg" style="font-size:${Math.round((Number(c.sz_tile_value) || 21) * 0.947)}px;color:#7ce05a;max-width:45%;text-align:center">--</div>
           <div style="width:1px;height:16px;background:rgba(100,180,255,.35);flex-shrink:0"></div>
-          <div class="val val-fit" id="v_bdis" style="font-size:${Math.round((Number(c.sz_tile_value) || 21) * 0.68)}px;color:#ffb45a;max-width:45%;text-align:center">--</div>
+          <div class="val val-fit" id="v_bdis" style="font-size:${Math.round((Number(c.sz_tile_value) || 21) * 0.947)}px;color:#ffb45a;max-width:45%;text-align:center">--</div>
         </div>
       </div>`;
     })();
