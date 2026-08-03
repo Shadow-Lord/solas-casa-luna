@@ -1,4 +1,4 @@
-// v2.0.77 stable · build no.101
+// v2.0.78 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.77';
+const VERSION = '2.0.78';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2483,13 +2483,12 @@ async _loadStatistics(entityId, hours = 24) {
             return 0;
         }
 
-        /* DAILY IMPORT COST (10‑minute Solis statistics with TODAY filter) */
+        /* DAILY IMPORT COST (statistics deltas only) */
 
         let costImportDay = 0;
 
-        // Statistics using configurable sensor
         const impHistRaw = await this._loadStatistics(
-            c.grid_import_today,
+            c.grid_import_today,   // ✔ configurable
             24
         );
 
@@ -2499,7 +2498,6 @@ async _loadStatistics(entityId, hours = 24) {
         for (let i = 1; i < impHistRaw.length; i++) {
             const ts = new Date(impHistRaw[i].start);
 
-            // Only use today's statistics
             if (ts.toDateString() !== today) continue;
 
             const prev = impHistRaw[i - 1].sum || 0;
@@ -2523,11 +2521,42 @@ async _loadStatistics(entityId, hours = 24) {
 
         c.cost_import_day = costImportDay;
 
-        /* DAILY EXPORT COST — using mapped variable */
-        const exportToday = Number(c.grid_export_energy) || 0;
-        c.cost_export_day = exportToday * exportPrice;
+        /* DAILY EXPORT COST (statistics deltas only) */
+
+        let costExportDay = 0;
+
+        const expHistRaw = await this._loadStatistics(
+            c.grid_export_energy,   // ✔ configurable
+            24
+        );
+
+        const expHist = [];
+
+        for (let i = 1; i < expHistRaw.length; i++) {
+            const ts = new Date(expHistRaw[i].start);
+
+            if (ts.toDateString() !== today) continue;
+
+            const prev = expHistRaw[i - 1].sum || 0;
+            const curr = expHistRaw[i].sum || 0;
+            const delta = curr - prev;
+
+            if (delta > 0 && delta < 5) {
+                expHist.push({
+                    start: expHistRaw[i].start,
+                    kwh: delta
+                });
+            }
+        }
+
+        for (const entry of expHist) {
+            costExportDay += entry.kwh * exportPrice;
+        }
+
+        c.cost_export_day = costExportDay;
 
         /* TOTAL COSTS — using mapped variables */
+
         const importPriceFlat = importWindows.length
             ? Math.max(...importWindows.map(w => w.price))
             : 0;
