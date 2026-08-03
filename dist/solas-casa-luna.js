@@ -1,4 +1,4 @@
-// v2.0.75 stable · build no.101
+// v2.0.76 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.75';
+const VERSION = '2.0.76';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2515,7 +2515,7 @@ async _loadStatistics(entityId, hours = 24) {
 
         // ✔ Fully configurable — uses your dashboard variable
         const impHistRaw = await this._loadStatistics(
-            c.grid_import_today,
+            'sensor.solis_inverter_1031040229230153_solis_daily_grid_energy_purchased',
             24
         );
 
