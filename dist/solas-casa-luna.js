@@ -2459,8 +2459,6 @@ const runPricing = async () => {
     for (let i = 1; i <= n; i++) {
         const start = c[`import_${i}_start`];
         const end   = c[`import_${i}_end`];
-
-        // ✔ FORCE updated prices to be numeric
         const price = Number(c[`import_${i}_price`]) || 0;
 
         if (start && end) {
@@ -2469,7 +2467,6 @@ const runPricing = async () => {
                 end:   toMinutes(end),
                 price
             });
-           console.log("WINDOW PRICES:", importWindows);
         }
     }
 
@@ -2507,7 +2504,7 @@ const runPricing = async () => {
         const curr = impHistRaw[i].sum || 0;
         const delta = curr - prev;
 
-        // ✔ FIX: count ALL positive deltas
+        // ✔ FIX: include ALL positive deltas
         if (delta > 0) {
             impHist.push({
                 start: impHistRaw[i].start,
@@ -2545,7 +2542,7 @@ const runPricing = async () => {
         const curr = expHistRaw[i].sum || 0;
         const delta = curr - prev;
 
-        // ✔ FIX: count ALL positive deltas
+        // ✔ FIX: include ALL positive deltas
         if (delta > 0) {
             expHist.push({
                 start: expHistRaw[i].start,
@@ -2560,14 +2557,10 @@ const runPricing = async () => {
 
     c.cost_export_day = costExportDay;
 
-    /* TOTAL COSTS — using mapped variables */
+    /* TOTAL COSTS — use delta-based cost (correct) */
 
-    const importPriceFlat = importWindows.length
-        ? Math.max(...importWindows.map(w => w.price))
-        : 0;
-
-    c.cost_import_total = (Number(c.total_import) || 0) * importPriceFlat;
-    c.cost_export_total = (Number(c.total_export) || 0) * exportPrice;
+    c.cost_import_total = c.cost_import_day;
+    c.cost_export_total = c.cost_export_day;
 
     this.requestUpdate?.();
 };
