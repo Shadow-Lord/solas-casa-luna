@@ -1,4 +1,4 @@
-// v2.0.83 stable · build no.101
+// v2.0.84 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.83';
+const VERSION = '2.0.84';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2437,8 +2437,9 @@ async _loadStatistics(entityId, hours = 24) {
         ${collapsibleInner('ev', evFront, 'EV', '#00aaff', 'bottom:4px;right:4px')}
       </div>` : '';
 
-/* ── Pricing Engine (Total kWh × Price — Option A) ───────────── */
+/* ── Pricing Engine (Option A — Total kWh × Time‑of‑Day Window Price) ───────────── */
 
+// Initialize cost fields
 c.cost_import_day = 0;
 c.cost_export_day = 0;
 c.cost_import_total = 0;
@@ -2446,16 +2447,55 @@ c.cost_export_total = 0;
 
 const runPricing = async () => {
 
-    /* IMPORT COST (simple total × price) */
+    function toMinutes(t) {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    /* ── Build import windows ─────────────────────────────────────────────── */
+
+    const n = Number(c.import_rate_count) || 0;
+    const importWindows = [];
+
+    for (let i = 1; i <= n; i++) {
+        const start = c[`import_${i}_start`];
+        const end   = c[`import_${i}_end`];
+        const price = Number(c[`import_${i}_price`]) || 0;
+
+        if (start && end) {
+            importWindows.push({
+                start: toMinutes(start),
+                end:   toMinutes(end),
+                price
+            });
+        }
+    }
+
+    /* ── Determine which window applies RIGHT NOW ─────────────────────────── */
+
+    const now = new Date();
+    const minsNow = now.getHours() * 60 + now.getMinutes();
+
+    function priceForMinute(minute) {
+        for (const w of importWindows) {
+            if (w.start <= w.end) {
+                if (minute >= w.start && minute < w.end) return w.price;
+            } else {
+                if (minute >= w.start || minute < w.end) return w.price;
+            }
+        }
+        return 0;
+    }
+
+    const currentImportPrice = priceForMinute(minsNow);
+
+    /* ── IMPORT COST (total × current window price) ───────────────────────── */
 
     const totalImport = Number(c.total_import) || 0;
-    const importPrice = Number(c.import_price) || 0;
+    c.cost_import_day = totalImport * currentImportPrice;
+    c.cost_import_total = c.cost_import_day;
 
-    c.cost_import_day = totalImport * importPrice;
-    c.cost_import_total = c.cost_import_day;   // same for Option A
-
-
-    /* EXPORT COST (simple total × price) */
+    /* ── EXPORT COST (total × flat export price) ─────────────────────────── */
 
     const totalExport = Number(c.total_export) || 0;
     const exportPrice = Number(c.export_price) || 0;
@@ -2463,11 +2503,11 @@ const runPricing = async () => {
     c.cost_export_day = totalExport * exportPrice;
     c.cost_export_total = c.cost_export_day;
 
-
     this.requestUpdate?.();
 };
 
 runPricing();
+
     /* ───────────────────────────────────────────────────────────── */
 
     this.shadowRoot.innerHTML = `
@@ -6091,7 +6131,4 @@ window.customCards.push({
   preview: false,
 });
 console.info(`%c SOLAS-CASA-LUNA %c v${VERSION} `, 'background:#0a2a55;color:#7fd4ff;font-weight:700', 'background:#123;color:#9ae63c');
-   console.log("IMPORT PRICE RAW:", c.import_price);
-console.log("IMPORT PRICE NUMBER:", Number(c.import_price));
-
 })();
