@@ -1,4 +1,4 @@
-// v2.0.82 stable · build no.101
+// v2.0.83 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.82';
+const VERSION = '2.0.83';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2466,8 +2466,6 @@ const runPricing = async () => {
 
     this.requestUpdate?.();
 };
-console.log("IMPORT PRICE RAW:", c.import_price);
-console.log("IMPORT PRICE NUMBER:", Number(c.import_price));
 
 runPricing();
     /* ───────────────────────────────────────────────────────────── */
@@ -6093,4 +6091,7 @@ window.customCards.push({
   preview: false,
 });
 console.info(`%c SOLAS-CASA-LUNA %c v${VERSION} `, 'background:#0a2a55;color:#7fd4ff;font-weight:700', 'background:#123;color:#9ae63c');
+   console.log("IMPORT PRICE RAW:", c.import_price);
+console.log("IMPORT PRICE NUMBER:", Number(c.import_price));
+
 })();
