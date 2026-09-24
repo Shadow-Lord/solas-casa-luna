@@ -1,4 +1,4 @@
-// v2.0.84 stable · build no.101
+// v2.0.85 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.84';
+const VERSION = '2.0.85';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2437,7 +2437,7 @@ async _loadStatistics(entityId, hours = 24) {
         ${collapsibleInner('ev', evFront, 'EV', '#00aaff', 'bottom:4px;right:4px')}
       </div>` : '';
 
-/* ── Pricing Engine (Option A — Total kWh × Time‑of‑Day Window Price) ───────────── */
+/* ── Pricing Engine (Solis 10‑minute statistics with TODAY filter) ───────────── */
 
 // Initialize cost fields
 c.cost_import_day = 0;
@@ -2452,8 +2452,7 @@ const runPricing = async () => {
         return h * 60 + m;
     }
 
-    /* ── Build import windows ─────────────────────────────────────────────── */
-
+    // Build import windows
     const n = Number(c.import_rate_count) || 0;
     const importWindows = [];
 
@@ -2471,10 +2470,7 @@ const runPricing = async () => {
         }
     }
 
-    /* ── Determine which window applies RIGHT NOW ─────────────────────────── */
-
-    const now = new Date();
-    const minsNow = now.getHours() * 60 + now.getMinutes();
+    const exportPrice = Number(c.export_price) || 0;
 
     function priceForMinute(minute) {
         for (const w of importWindows) {
@@ -2487,21 +2483,86 @@ const runPricing = async () => {
         return 0;
     }
 
-    const currentImportPrice = priceForMinute(minsNow);
+    /* DAILY IMPORT COST (statistics deltas only) */
 
-    /* ── IMPORT COST (total × current window price) ───────────────────────── */
+    let costImportDay = 0;
 
-    const totalImport = Number(c.total_import) || 0;
-    c.cost_import_day = totalImport * currentImportPrice;
-    c.cost_import_total = c.cost_import_day;
+    const impHistRaw = await this._loadStatistics(
+        c.grid_import_today,   // ✔ configurable
+        24
+    );
 
-    /* ── EXPORT COST (total × flat export price) ─────────────────────────── */
+    const today = new Date().toDateString();
+    const impHist = [];
 
-    const totalExport = Number(c.total_export) || 0;
-    const exportPrice = Number(c.export_price) || 0;
+    for (let i = 1; i < impHistRaw.length; i++) {
+        const ts = new Date(impHistRaw[i].start);
 
-    c.cost_export_day = totalExport * exportPrice;
-    c.cost_export_total = c.cost_export_day;
+        if (ts.toDateString() !== today) continue;
+
+        const prev = impHistRaw[i - 1].sum || 0;
+        const curr = impHistRaw[i].sum || 0;
+        const delta = curr - prev;
+
+        if (delta > 0 && delta < 5) {
+            impHist.push({
+                start: impHistRaw[i].start,
+                kwh: delta
+            });
+        }
+    }
+
+    for (const entry of impHist) {
+        const ts = new Date(entry.start);
+        const mins = ts.getHours() * 60 + ts.getMinutes();
+        const price = priceForMinute(mins);
+        costImportDay += entry.kwh * price;
+    }
+
+    c.cost_import_day = costImportDay;
+
+    /* DAILY EXPORT COST (statistics deltas only) */
+
+    let costExportDay = 0;
+
+    const expHistRaw = await this._loadStatistics(
+        c.grid_export_energy,   // ✔ configurable
+        24
+    );
+
+    const expHist = [];
+
+    for (let i = 1; i < expHistRaw.length; i++) {
+        const ts = new Date(expHistRaw[i].start);
+
+        if (ts.toDateString() !== today) continue;
+
+        const prev = expHistRaw[i - 1].sum || 0;
+        const curr = expHistRaw[i].sum || 0;
+        const delta = curr - prev;
+
+        if (delta > 0 && delta < 5) {
+            expHist.push({
+                start: expHistRaw[i].start,
+                kwh: delta
+            });
+        }
+    }
+
+    for (const entry of expHist) {
+        costExportDay += entry.kwh * exportPrice;
+    }
+
+    c.cost_export_day = costExportDay;
+
+    /* TOTAL COSTS — using mapped variables */
+
+    const importPriceFlat = importWindows.length
+        ? Math.max(...importWindows.map(w => w.price))
+        : 0;
+
+    c.cost_import_total = (Number(c.total_import) || 0) * importPriceFlat;
+    c.cost_export_total = (Number(c.total_export) || 0) * exportPrice;
 
     this.requestUpdate?.();
 };
