@@ -2469,6 +2469,7 @@ const runPricing = async () => {
                 end:   toMinutes(end),
                 price
             });
+           console.log("WINDOW PRICES:", importWindows);
         }
     }
 
