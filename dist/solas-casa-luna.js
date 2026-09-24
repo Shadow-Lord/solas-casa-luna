@@ -1,4 +1,4 @@
-// v2.0.92 stable · build no.101
+// v2.0.93 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.92';
+const VERSION = '2.0.93';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2556,6 +2556,34 @@ const runPricing = async () => {
     }
 
     c.cost_export_day = costExportDay;
+console.group("PRICING DEBUG");
+
+console.log("WINDOWS:", importWindows);
+
+console.log("DELTA ENTRIES:");
+impHist.forEach((e, i) => {
+    const ts = new Date(e.start);
+    const mins = ts.getHours() * 60 + ts.getMinutes();
+    console.log(
+        `#${i}`,
+        "Time:", ts.toTimeString().slice(0,5),
+        "Minutes:", mins,
+        "kWh:", e.kwh,
+        "Price:", priceForMinute(mins),
+        "Cost:", e.kwh * priceForMinute(mins)
+    );
+});
+
+console.log("DELTA SUM:", impHist.reduce((a, b) => a + b.kwh, 0));
+console.log("IMPORT DAY COST:", costImportDay);
+
+console.log("RAW TOTAL IMPORT (c.total_import):", c.total_import);
+console.log("RAW TOTAL EXPORT (c.total_export):", c.total_export);
+
+console.log("COST IMPORT TOTAL (before override):", c.cost_import_total);
+console.log("COST EXPORT TOTAL (before override):", c.cost_export_total);
+
+console.groupEnd();
 
     /* TOTAL COSTS — use delta-based cost (correct) */
 
