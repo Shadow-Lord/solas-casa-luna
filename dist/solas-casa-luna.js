@@ -1,4 +1,4 @@
-// v2.0.86 stable · build no.101
+// v2.0.87 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.86';
+const VERSION = '2.0.87';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2459,6 +2459,8 @@ const runPricing = async () => {
     for (let i = 1; i <= n; i++) {
         const start = c[`import_${i}_start`];
         const end   = c[`import_${i}_end`];
+
+        // ✔ FORCE updated prices to be numeric
         const price = Number(c[`import_${i}_price`]) || 0;
 
         if (start && end) {
@@ -2488,7 +2490,7 @@ const runPricing = async () => {
     let costImportDay = 0;
 
     const impHistRaw = await this._loadStatistics(
-        c.grid_import_today,   // ✔ configurable
+        c.grid_import_today,
         24
     );
 
@@ -2527,7 +2529,7 @@ const runPricing = async () => {
     let costExportDay = 0;
 
     const expHistRaw = await this._loadStatistics(
-        c.grid_export_energy,   // ✔ configurable
+        c.grid_export_energy,
         24
     );
 
