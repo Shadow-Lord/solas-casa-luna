@@ -2466,6 +2466,8 @@ const runPricing = async () => {
 
     this.requestUpdate?.();
 };
+console.log("IMPORT PRICE RAW:", c.import_price);
+console.log("IMPORT PRICE NUMBER:", Number(c.import_price));
 
 runPricing();
     /* ───────────────────────────────────────────────────────────── */
