@@ -1,4 +1,4 @@
-// v2.0.90 stable · build no.101
+// v2.0.91 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.90';
+const VERSION = '2.0.91';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2554,6 +2554,8 @@ const runPricing = async () => {
     }
 
     c.cost_export_day = costExportDay;
+console.log("TOTAL IMPORT (c.total_import):", Number(c.total_import));
+console.log("DELTA SUM (impHist):", impHist.reduce((a, b) => a + b.kwh, 0));
 
     /* TOTAL COSTS — use delta-based cost (correct) */
 
