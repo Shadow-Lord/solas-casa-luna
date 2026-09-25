@@ -1,4 +1,4 @@
-// v2.0.94 stable · build no.101
+// v2.0.95 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.94';
+const VERSION = '2.0.95';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2504,7 +2504,7 @@ const runPricing = async () => {
         const curr = impHistRaw[i].sum || 0;
         const delta = curr - prev;
 
-        // ✔ FIX: include ALL positive deltas
+        // Include ALL positive deltas
         if (delta > 0) {
             impHist.push({
                 start: impHistRaw[i].start,
@@ -2540,9 +2540,12 @@ const runPricing = async () => {
 
         const prev = expHistRaw[i - 1].sum || 0;
         const curr = expHistRaw[i].sum || 0;
-        const delta = curr - prev;
+        let delta = curr - prev;
 
-        // ✔ FIX: include ALL positive deltas
+        // Solis export sometimes resets or drops backwards
+        if (delta < 0) continue;
+
+        // Include ALL positive deltas
         if (delta > 0) {
             expHist.push({
                 start: expHistRaw[i].start,
