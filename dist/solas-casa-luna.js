@@ -1,4 +1,4 @@
-// v2.1.08 stable · build no.101
+// v2.1.09 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.08';
+const VERSION = '2.1.09';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3649,7 +3649,7 @@ runPricing();
         + this._wTile('🧠', 'Memory', c.sys_memory || '', '%')
         + this._wTile('💿', 'Disk', c.sys_disk || '', '%')
         // render the preformatted uptime string using the raw tile renderer
-        + this._wTileRaw('⏱️', 'Uptime', uptimeStr, ''));
+        + this._wTileRaw('⏱️', 'Uptime', uptimeStr, ''))
       + this._wHead('Parental Safety Overrides')
       + this._wGrid(4,
         this._wToggleTile('🚫', 'Disable Internet for Emma', 'input_boolean.emma_is_blocked_today'));
