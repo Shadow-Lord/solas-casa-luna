@@ -1,4 +1,4 @@
-// v2.0.97 stable · build no.101
+// v2.0.98 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.97';
+const VERSION = '2.0.98';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -4876,23 +4876,23 @@ runPricing();
         const ic = c[`_extra_tile_${n}_icon`];
         const span = iconWrap.querySelector('span');
         const svg = iconWrap.querySelector('svg');
-        const clearAnim = (e) => e && e.classList.remove('tileSpin', 'tileBulbOn', 'tileSocketOn', 'tileRgbOn', 'tileFlameOn', 'tileSnowOn', 'tileWaterOn', 'tileHeatOn');
-        clearAnim(svg);
-        if (svg && RC_ICONS[ic]) {
-          const off = 'rgba(180,180,180,0.45)';
-          if (ic === 'fan') { if (span) span.style.color = onState ? 'rgba(0,225,255,0.95)' : off; if (onState) svg.classList.add('tileSpin'); }
-          else if (ic === 'bulb') { if (span) span.style.color = onState ? 'rgba(255,220,70,0.95)' : off; if (onState) svg.classList.add('tileBulbOn'); const rays = svg.querySelector('.bulb-rays'); if (rays) rays.setAttribute('opacity', onState ? '1' : '0'); }
-          else if (ic === 'plug') { if (span) span.style.color = onState ? 'rgba(80,240,140,0.95)' : off; if (onState) svg.classList.add('tileSocketOn'); }
-          else if (ic === 'flame') { if (span) span.style.color = onState ? 'rgba(255,90,40,0.95)' : off; if (onState) svg.classList.add('tileFlameOn'); }
-          else if (ic === 'snow') { if (span) span.style.color = onState ? 'rgba(0,210,255,0.95)' : off; if (onState) svg.classList.add('tileSnowOn'); }
-          else if (ic === 'water') { if (span) span.style.color = onState ? 'rgba(60,170,255,0.95)' : off; if (onState) svg.classList.add('tileWaterOn'); }
-          else if (ic === 'heat') { if (span) span.style.color = onState ? 'rgba(255,150,50,0.95)' : off; if (onState) svg.classList.add('tileHeatOn'); }
+        if (svg) {
+          svg.classList.remove('tileSpin', 'tileBulbOn', 'tileSocketOn', 'tileRgbOn', 'tileFlameOn', 'tileSnowOn', 'tileWaterOn', 'tileHeatOn');
+          if (RC_ICONS[ic]) {
+            const off = 'rgba(180,180,180,0.45)';
+            if (ic === 'fan') { if (span) span.style.color = onState ? 'rgba(0,225,255,0.95)' : off; if (onState) svg.classList.add('tileSpin'); }
+            else if (ic === 'bulb') { if (span) span.style.color = onState ? 'rgba(255,220,70,0.95)' : off; if (onState) svg.classList.add('tileBulbOn'); const rays = svg.querySelector('.bulb-rays'); if (rays) rays.setAttribute('opacity', onState ? '1' : '0'); }
+            else if (ic === 'plug') { if (span) span.style.color = onState ? 'rgba(80,240,140,0.95)' : off; if (onState) svg.classList.add('tileSocketOn'); }
+            else if (ic === 'flame') { if (span) span.style.color = onState ? 'rgba(255,90,40,0.95)' : off; if (onState) svg.classList.add('tileFlameOn'); }
+            else if (ic === 'snow') { if (span) span.style.color = onState ? 'rgba(0,210,255,0.95)' : off; if (onState) svg.classList.add('tileSnowOn'); }
+            else if (ic === 'water') { if (span) span.style.color = onState ? 'rgba(60,170,255,0.95)' : off; if (onState) svg.classList.add('tileWaterOn'); }
+            else if (ic === 'heat') { if (span) span.style.color = onState ? 'rgba(255,150,50,0.95)' : off; if (onState) svg.classList.add('tileHeatOn'); }
+          }
         }
       }
       if (tile) tile.style.animation = onState ? 'clTilePulse 2.8s ease-in-out infinite' : '';
     }
   }
-
 
   /* ═══════════════════════ SUN / MOON / FLOW / ARC RENDERING ═══════════════════════ */
   _dirFromDeg(d) {
