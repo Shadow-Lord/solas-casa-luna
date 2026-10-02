@@ -1,4 +1,4 @@
-// v2.1.04 stable · build no.101
+// v2.1.05 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.04';
+const VERSION = '2.1.05';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2645,8 +2645,28 @@ runPricing();
     this._fitBottomLabels();
     this._a11yPass();
     const c = this.config;
-    this.shadowRoot.querySelectorAll('.navtile').forEach(t =>
-      t.addEventListener('click', () => this._openView(t.dataset.view)));
+    // 🔒 SMART SECURE ROUTING NAV INTERCEPTOR
+    this.shadowRoot.querySelectorAll('.navtile').forEach(t => {
+      t.addEventListener('click', () => {
+        const targetView = t.dataset.view;
+        const requiredPin = this.config.system_pin_code ? String(this.config.system_pin_code).trim() : '';
+
+        // If a PIN is set in your General Settings and someone clicks the "system" rail
+        if (targetView === 'system' && requiredPin !== '') {
+          const pinPrompt = prompt("Enter Administrative PIN Code to access System Settings:");
+          
+          if (pinPrompt === requiredPin) {
+            this._openView(targetView);
+          } else if (pinPrompt !== null) {
+            alert("Access Denied: Invalid Administrative Passcode.");
+          }
+          return; // Prevent the menu from opening
+        }
+
+        // Open all other non-restricted views normally
+        this._openView(targetView);
+      });
+    });
     this._q('#detailClose')?.addEventListener('click', () => this._closeView());
     /* phase tile flip: corner ↻ button flips between grid phases and inverter pwr/volt */
     const flipCard = this._q('#phaseFlip');
@@ -5794,6 +5814,9 @@ class CasaLunaEditor extends HTMLElement {
     shell.appendChild(section('general', '⚙️', 'General', [
       textField('title', 'Title', 'CASA LUNA'),
       textField('inverter_name', 'Inverter Name', 'e.g. My Inverter'),
+      divider(),
+      // 🔒 PIN CODE FORM CONFIGURATION ADDED HERE:
+      textField('system_pin_code', 'Restrict System Panel PIN Code (leave blank for no PIN)', 'e.g. 1234'),
       divider(),
       capGroup('Battery Capacity', 'battery_cap_unit', 'battery_full_ah', 'battery_full_wh'),
       capGroup('Battery 2 Capacity', 'battery2_cap_unit', 'battery2_full_ah', 'battery2_full_wh'),
