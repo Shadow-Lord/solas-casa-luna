@@ -1,4 +1,4 @@
-// v2.1.02 stable · build no.101
+// v2.1.04 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.02';
+const VERSION = '2.1.04';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -4858,9 +4858,10 @@ _updateBottomTiles() {
       continue; 
     }
 
-    // 🔥 Your new minutes logic
-    if (id === 'sensor.minutes_remaining') {
-      const minsValue = Number(this._st(id));
+    // 🔥 Your custom script and accumulator minutes logic
+    if (id === 'script.emma_grant_30_mins_extra') {
+      // Read the numbers straight out of your tracking input helper
+      const minsValue = Number(this._st('input_number.emma_internet_minutes'));
 
       if (minsValue > 0) {
         el.textContent = `${Math.round(minsValue)} MIN`;
