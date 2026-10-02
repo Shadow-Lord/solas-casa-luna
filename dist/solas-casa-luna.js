@@ -1,4 +1,4 @@
-// v2.0.96 stable · build no.101
+// v2.0.97 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.0.96';
+const VERSION = '2.0.97';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -549,6 +549,7 @@ const RC_ICONS = {
   heat: `<g stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round">
     <path d="M7.5 21 V14 Q7.5 10.5 9.75 10.5 Q12 10.5 12 7"/>
     <path d="M13 21 V13 Q13 9.5 15.25 9.5 Q17.5 9.5 17.5 6"/></g>`,
+  wifi: `<path d="M12 21a2 2 0 1 1-2-2 2 2 0 0 1 2 2zm0-5.11a5.92 5.92 0 0 0-8 0l1.42 1.42a3.92 3.92 0 0 1 5.16 0zm0-4.14a9.91 9.91 0 0 0-13.63 0l1.42 1.42a7.92 7.92 0 0 1 10.79 0zm0-4.15a13.9 13.9 0 0 0-19.25 0L.54 9a11.91 11.91 0 0 1 16.42 0z" fill="currentColor"/>`
 };
 const rcIcon = (k, s = 31) =>
   `<svg viewBox="0 0 24 24" width="${s}" height="${s}" style="display:block">${RC_ICONS[k]}</svg>`;
@@ -4843,21 +4844,34 @@ runPricing();
 
   _updateBottomTiles() {
     const c = this.config;
-    for (let n = 1; n <= 6; n++) {
-      const id = c[`_extra_tile_${n}_entity`];
-      const el = this._q(`#bt${n}`);
-      if (!el) continue;
-      if (!id) { el.textContent = '—'; continue; }
+    for (let n = 1; n  0) {
+          // Time is active! Show remaining mins and animate a glowing Wi-Fi symbol
+          el.textContent = `${Math.round(minsValue)} MIN`;
+          el.style.color = '#5ae06e'; // Neon Green
+          if (tile) tile.style.animation = 'clTilePulse 2.8s ease-in-out infinite';
+          if (iconWrap) {
+            iconWrap.innerHTML = `<span style="color:#5ae06e;display:flex;filter:drop-shadow(0 0 5px rgba(90,224,110,0.85))">${rcIcon('wifi', 31)}</span>`;
+          }
+        } else {
+          // Time is out. Show OFF text and fall back to the static flame
+          el.textContent = 'OFF';
+          el.style.color = '#eaf3ff'; // Dim White
+          if (tile) tile.style.animation = '';
+          if (iconWrap) {
+            iconWrap.innerHTML = `<span style="color:rgba(180,180,180,0.45);display:flex">${rcIcon('flame', 31)}</span>`;
+          }
+        }
+        continue; // Skip normal processing for Emma's tile slot
+      }
+
+      // ── Standard Theme Processing for all other tiles ──
       const st = this._st(id);
       let u = this._attr(id, 'unit_of_measurement') || '';
       if (!u && id.startsWith('climate.') && /^-?\\d/.test(String(st))) u = '\u00b0C';
       el.textContent = st === null ? '--' : `${st}${u ? ' ' + u : ''}`.toUpperCase().slice(0, 16);
       const onState = ['on', 'open', 'home', 'auto', 'heat', 'cool', 'playing', 'unlocked'].includes(String(st).toLowerCase());
-      el.style.color = onState ? '#5ae06e'
-        : ['off', 'closed', 'disarmed', 'locked'].includes(String(st).toLowerCase()) ? '#eaf3ff' : '#7fd4ff';
-      /* live icon animation by icon type + on-state (room-card style) */
-      const iconWrap = this._q(`#btIcon${n}`);
-      const tile = this._q(`#bottile${n}`);
+      el.style.color = onState ? '#5ae06e' : ['off', 'closed', 'disarmed', 'locked'].includes(String(st).toLowerCase()) ? '#eaf3ff' : '#7fd4ff';
+      
       if (iconWrap) {
         const ic = c[`_extra_tile_${n}_icon`];
         const span = iconWrap.querySelector('span');
@@ -4865,7 +4879,6 @@ runPricing();
         const clearAnim = (e) => e && e.classList.remove('tileSpin', 'tileBulbOn', 'tileSocketOn', 'tileRgbOn', 'tileFlameOn', 'tileSnowOn', 'tileWaterOn', 'tileHeatOn');
         clearAnim(svg);
         if (svg && RC_ICONS[ic]) {
-          // room-card color behavior: each device type its own on-colour; dim grey when off
           const off = 'rgba(180,180,180,0.45)';
           if (ic === 'fan') { if (span) span.style.color = onState ? 'rgba(0,225,255,0.95)' : off; if (onState) svg.classList.add('tileSpin'); }
           else if (ic === 'bulb') { if (span) span.style.color = onState ? 'rgba(255,220,70,0.95)' : off; if (onState) svg.classList.add('tileBulbOn'); const rays = svg.querySelector('.bulb-rays'); if (rays) rays.setAttribute('opacity', onState ? '1' : '0'); }
@@ -4879,6 +4892,7 @@ runPricing();
       if (tile) tile.style.animation = onState ? 'clTilePulse 2.8s ease-in-out infinite' : '';
     }
   }
+
 
   /* ═══════════════════════ SUN / MOON / FLOW / ARC RENDERING ═══════════════════════ */
   _dirFromDeg(d) {
