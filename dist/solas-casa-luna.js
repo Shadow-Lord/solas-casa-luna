@@ -1,4 +1,4 @@
-// v2.1.17 stable · build no.101
+// v2.1.18 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.17';
+const VERSION = '2.1.18';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -5426,16 +5426,13 @@ _updateBottomTiles() {
           { domain: 'automation' },
           { domain: 'binary_sensor', device_class: ['motion', 'occupancy', 'door', 'window', 'gas', 'smoke', 'safety'] },
         ]);
-
+        
     const rows = [];
     
     // 1. Process all the default auto-discovered loops (Curfew rules, Loop engines, etc.)
     for (const id of ids) {
       const s = this._hass?.states?.[id];
       if (!s) continue;
-      // Skip the main script entity tracker state here (we pull its stackable history below instead)
-      if (id === 'script.emma_grant_30_mins_extra') continue;
-
       const changed = s.last_changed || s.last_updated;
       const changedMs = changed ? new Date(changed).getTime() : null;
       const ago = changedMs ? this._relTime(changedMs) : '';
@@ -5459,30 +5456,23 @@ _updateBottomTiles() {
       rows.push({ name: this._name(id), value: val, ago, ts: changedMs || 0, col });
     }
 
-    // ⚡ 2. SURGICALLY FETCH INDIVIDUAL PAST TRIGGERS FROM THE HISTORICAL EVENT BUS CACHE
-    const emmaScript = this._hass?.states['script.emma_grant_30_mins_extra'];
-    if (emmaScript && this._hass) {
-      // Pull the runtime execution state array cache straight out of the Home Assistant core history theme engine
-      const executionHistory = this._hass.themes?.states?.['script.emma_grant_30_mins_extra']?.history || [];
-      
-      executionHistory.forEach((run) => {
-        // Every time the script ran, its state temporarily flicked 'on' before resetting
-        if (run.state === 'on' || run.s === 'on') {
-          const runTime = new Date(run.last_changed || run.lc).getTime();
-          rows.push({
-            name: "Emma Internet Time Added",
-            value: "+30 MINS",
-            ago: this._relTime(runTime),
-            ts: runTime,
-            col: "#5ae06e" // 🟢 Clean green text formatting highlight
-          });
+    // ⚡ 2. SURGICALLY COLLECT AND STACK EVERY UNIQUE EMMA NOTIFICATION FROM PERSISTENT NOTIFICATIONS
+    if (this._hass && this._hass.states) {
+      for (const entId in this._hass.states) {
+        if (entId.startsWith('persistent_notification.emma_log_')) {
+          const s = this._hass.states[entId];
+          if (s) {
+            const changed = s.last_changed || s.last_updated;
+            const changedMs = changed ? new Date(changed).getTime() : Date.now();
+            rows.push({
+              name: "Emma Internet Time Added",
+              value: "+30 MINS",
+              ago: this._relTime(changedMs),
+              ts: changedMs,
+              col: "#5ae06e" // 🟢 Clean green text formatting highlight
+            });
+          }
         }
-      });
-
-      // Fallback: If your history cache is completely empty, at least show the single most recent click
-      if (executionHistory.length === 0 && emmaScript.attributes.last_triggered) {
-        const fallbackTime = new Date(emmaScript.attributes.last_triggered).getTime();
-        rows.push({ name: "Emma Internet Time Added", value: "+30 MINS", ago: this._relTime(fallbackTime), ts: fallbackTime, col: "#5ae06e" });
       }
     }
 
