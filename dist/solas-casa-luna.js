@@ -1,4 +1,4 @@
-// v2.1.09 stable · build no.101
+// v2.1.10 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.09';
+const VERSION = '2.1.10';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -4897,14 +4897,17 @@ _updateBottomTiles() {
              </span>`;
         }
       } else {
-        el.textContent = 'OFF';
+        el.textContent = '0 MINS';
         el.style.color = '#eaf3ff';
         if (tile) tile.style.animation = '';
         if (iconWrap) {
-          iconWrap.innerHTML =
-            `<span style="color:rgba(180,180,180,0.45);display:flex">
-               ${rcIcon('flame', 31)}
-             </span>`;
+          iconWrap.innerHTML = `
+            <span style="color:rgba(255,90,90,0.55);display:flex;filter:drop-shadow(0 0 2px rgba(255,90,90,0.2))">
+              <svg viewBox="0 0 24 24" width="31" height="31" style="display:block;overflow:visible">
+                <path d="M12 21a2 2 0 1 1-2-2 2 2 0 0 1 2 2zm0-5.11a5.92 5.92 0 0 0-8 0l1.42 1.42a3.92 3.92 0 0 1 5.16 0zm0-4.14a9.91 9.91 0 0 0-13.63 0l1.42 1.42a7.92 7.92 0 0 1 10.79 0zm0-4.15a13.9 13.9 0 0 0-19.25 0L.54 9a11.91 11.91 0 0 1 16.42 0z" fill="rgba(180,180,180,0.3)" />
+                <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+              </svg>
+            </span>`;
         }
       }
 
