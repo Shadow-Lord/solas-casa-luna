@@ -1,4 +1,4 @@
-// v2.1.21 stable · build no.101
+// v2.1.22 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.21';
+const VERSION = '2.1.22';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -5437,17 +5437,20 @@ _updateBottomTiles() {
 
     const rows = [];
     
-    // 1. Process all the default auto-discovered background system automations natively
+    // 1. Process all the default auto-discovered background system loops natively
     for (const id of ids) {
       const s = this._hass?.states?.[id];
       if (!s) continue;
+      // Skip the main script tracker state here (we pull its un-erasable database stack below instead)
+      if (id === 'script.emma_grant_30_mins_extra') continue;
+
       const changed = s.last_changed || s.last_updated;
       const changedMs = changed ? new Date(changed).getTime() : null;
       const ago = changedMs ? this._relTime(changedMs) : '';
       const unit = s.attributes?.unit_of_measurement || '';
       let val = `${s.state}${unit ? ' ' + unit : ''}`;
       let col = '#7fd4ff';
-      const dom = id.split('.')[0]; // ⚡ Fixed: Correctly reads the string domain prefix
+      const dom = id.split('.');
       
       if (dom === 'binary_sensor') {
         const dc = s.attributes?.device_class || '';
@@ -5464,16 +5467,30 @@ _updateBottomTiles() {
       rows.push({ name: this._name(id), value: val, ago, ts: changedMs || 0, col });
     }
 
-    // ⚡ 2. SURGICALLY EMBED THE INDEPENDENT LOCAL CLICK ENTRIES FROM MEMORY
-    if (this._emmaLogs && this._emmaLogs.length > 0) {
-      for (const log of this._emmaLogs) {
-        rows.push({
-          name: log.name,
-          value: log.value,
-          ago: this._relTime(log.ts), // Computes individual running timelines (e.g. 5m ago)
-          ts: log.ts,
-          col: "#5ae06e" // 🟢 Clean green text formatting highlight
-        });
+    // ⚡ 2. SURGICALLY READ EVERY UNIQUE HISTORICAL BUTTON TAP STORED ON THE HARD DRIVE
+    const emmaScript = this._hass?.states['script.emma_grant_30_mins_extra'];
+    if (emmaScript && this._hass) {
+      // Pull the system-wide state history array directly out of the frontend event bus context cache
+      const databaseHistory = this._hass.themes?.states?.['script.emma_grant_30_mins_extra']?.history || [];
+      
+      databaseHistory.forEach((run) => {
+        // Every time the button script ran, its state flipped 'on' in the historical logs
+        if (run.state === 'on' || run.s === 'on') {
+          const runTime = new Date(run.last_changed || run.lc).getTime();
+          rows.push({
+            name: "Emma Internet Time Added",
+            value: "+30 MINS",
+            ago: this._relTime(runTime),
+            ts: runTime,
+            col: "#5ae06e" // 🟢 Neon green text highlight
+          });
+        }
+      });
+
+      // Gutter Fallback: If the history cache hasn't loaded yet, display the single last execution event natively
+      if (databaseHistory.length === 0 && emmaScript.attributes.last_triggered) {
+        const fallbackTime = new Date(emmaScript.attributes.last_triggered).getTime();
+        rows.push({ name: "Emma Internet Time Added", value: "+30 MINS", ago: this._relTime(fallbackTime), ts: fallbackTime, col: "#5ae06e" });
       }
     }
 
