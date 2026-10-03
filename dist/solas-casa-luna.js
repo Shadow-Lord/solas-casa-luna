@@ -1,4 +1,4 @@
-// v2.1.13 stable · build no.101
+// v2.1.14 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.13';
+const VERSION = '2.1.14';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -5433,6 +5433,9 @@ _updateBottomTiles() {
     }
     const rows = [];
     for (const id of ids) {
+      // ⚡ SKIP THE CORE SCRIPT ENTITY IN THIS LOOP (We process its history below)
+      if (id === 'script.emma_grant_30_mins_extra') continue;
+
       const s = this._hass?.states?.[id];
       if (!s) continue;
       const changed = s.last_changed || s.last_updated;
@@ -5454,6 +5457,34 @@ _updateBottomTiles() {
       } else if (dom === 'automation') { const en = String(s.state) === 'on'; val = en ? 'Enabled' : 'Off'; col = en ? '#5ae06e' : '#7fa3c4'; }
       rows.push({ name: this._name(id), value: val, ago, ts: changedMs || 0, col });
     }
+
+    // ⚡ NEW INJECTION: PULL ALL INDIVIDUAL LOGBOOK EVENTS FOR EMMA'S SCRIPT
+    const emmaScript = this._hass?.states['script.emma_grant_30_mins_extra'];
+    if (emmaScript && this._hass) {
+      // Fetch the last 24 hours of script history cached by the Home Assistant frontend context engine
+      const scriptHistory = this._hass.themes?.states?.['script.emma_grant_30_mins_extra']?.history || [];
+      
+      if (scriptHistory.length === 0 && emmaScript.attributes.last_triggered) {
+        // Fallback: If no history array is available yet, at least log the single most recent trigger time
+        const tMs = new Date(emmaScript.attributes.last_triggered).getTime();
+        rows.push({ name: "Emma Internet Time Added", value: "+30 MINS", ago: this._relTime(tMs), ts: tMs, col: "#5ae06e" });
+      } else {
+        // Loop through each distinct timeline state event where the script flicked "on" and stack them up!
+        scriptHistory.forEach((event) => {
+          if (event.state === 'on' || event.s === 'on') {
+            const tMs = new Date(event.last_changed || event.lc).getTime();
+            rows.push({
+              name: "Emma Internet Time Added",
+              value: "+30 MINS",
+              ago: this._relTime(tMs),
+              ts: tMs,
+              col: "#5ae06e" // Clean neon green row highlight
+            });
+          }
+        });
+      }
+    }
+
     rows.sort((a, b) => b.ts - a.ts);
     const html = rows.slice(0, 12).map(r =>
       `<div style="position:relative;display:flex;align-items:baseline;justify-content:space-between;gap:8px;height:30px;padding:0 14px">
