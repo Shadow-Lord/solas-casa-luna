@@ -1,4 +1,4 @@
-// v2.1.12 stable · build no.101
+// v2.1.13 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.12';
+const VERSION = '2.1.13';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -5452,22 +5452,6 @@ _updateBottomTiles() {
         else if (/moisture|water/.test(dc)) { val = on ? 'Wet' : 'Dry'; col = on ? '#ff5a5a' : '#7fa3c4'; }
         else { val = on ? 'Triggered' : 'Clear'; col = on ? '#ffb45a' : '#7fa3c4'; }
       } else if (dom === 'automation') { const en = String(s.state) === 'on'; val = en ? 'Enabled' : 'Off'; col = en ? '#5ae06e' : '#7fa3c4'; }
-      // ⚡ INTERCEPT RETRIEVAL FOR THE EXTRA TIME COUNTER PRESSES
-      if (id === 'script.emma_grant_30_mins_extra') {
-        const lastTriggered = s.attributes && s.attributes.last_triggered ? s.attributes.last_triggered : null;
-        if (!lastTriggered) continue; // Skip displaying if it has never been clicked yet
-        
-        const triggerMs = new Date(lastTriggered).getTime();
-        rows.push({
-          name: "Emma Internet Time Added",
-          value: "+30 MINS",
-          ago: this._relTime(triggerMs), // Calculates localized relative time (e.g. 2m ago)
-          ts: triggerMs,
-          col: "#5ae06e" // Glowing Green text color
-        });
-        continue; // Hand off execution safely to the next iteration
-      }
-
       rows.push({ name: this._name(id), value: val, ago, ts: changedMs || 0, col });
     }
     rows.sort((a, b) => b.ts - a.ts);
