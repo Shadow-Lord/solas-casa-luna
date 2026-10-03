@@ -1,4 +1,4 @@
-// v2.1.20 stable · build no.101
+// v2.1.21 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.20';
+const VERSION = '2.1.21';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -4061,13 +4061,21 @@ runPricing();
     const id = this.config[`_extra_tile_${n}_entity`];
     if (!id) return;
     
-    // ⚡ If the entity is a script, call it instantly and bypass the popup
-    if (id.startsWith('script.')) {
+    // ⚡ INTERCEPT CLICK AND APPEND A PERMANENT, STACKABLE ROW DIRECTLY IN MEMORY
+    if (id === 'script.emma_grant_30_mins_extra') {
+      if (!this._emmaLogs) this._emmaLogs = [];
+      
+      this._emmaLogs.push({
+        name: "Emma Internet Time Added",
+        value: "+30 MINS",
+        ts: Date.now() // Captures the exact millisecond of THIS unique click
+      });
+      
+      // Instantly call the script action backend
       this._hass.callService('script', 'turn_on', { entity_id: id });
       return;
     }
     
-    // Otherwise, handle normal entities by opening the popup
     this._tilePopup(n);
   }
 
@@ -5429,7 +5437,7 @@ _updateBottomTiles() {
 
     const rows = [];
     
-    // 1. Process all the default auto-discovered loops (Curfew rules, Loop engines, etc.)
+    // 1. Process all the default auto-discovered background system automations natively
     for (const id of ids) {
       const s = this._hass?.states?.[id];
       if (!s) continue;
@@ -5439,7 +5447,7 @@ _updateBottomTiles() {
       const unit = s.attributes?.unit_of_measurement || '';
       let val = `${s.state}${unit ? ' ' + unit : ''}`;
       let col = '#7fd4ff';
-      const dom = id.split('.')[0]; // ⚡ Strict string domain processing
+      const dom = id.split('.')[0]; // ⚡ Fixed: Correctly reads the string domain prefix
       
       if (dom === 'binary_sensor') {
         const dc = s.attributes?.device_class || '';
@@ -5456,23 +5464,16 @@ _updateBottomTiles() {
       rows.push({ name: this._name(id), value: val, ago, ts: changedMs || 0, col });
     }
 
-    // ⚡ 2. COLLECT AND STACK EVERY UNIQUE EMMA NOTIFICATION FROM PERSISTENT NOTIFICATIONS
-    if (this._hass && this._hass.states) {
-      for (const entId in this._hass.states) {
-        if (entId.startsWith('persistent_notification.emma_log_')) {
-          const s = this._hass.states[entId];
-          if (s) {
-            const changed = s.last_changed || s.last_updated;
-            const changedMs = changed ? new Date(changed).getTime() : Date.now();
-            rows.push({
-              name: "Emma Internet Time Added",
-              value: "+30 MINS",
-              ago: this._relTime(changedMs),
-              ts: changedMs,
-              col: "#5ae06e" // 🟢 Glowing Green row
-            });
-          }
-        }
+    // ⚡ 2. SURGICALLY EMBED THE INDEPENDENT LOCAL CLICK ENTRIES FROM MEMORY
+    if (this._emmaLogs && this._emmaLogs.length > 0) {
+      for (const log of this._emmaLogs) {
+        rows.push({
+          name: log.name,
+          value: log.value,
+          ago: this._relTime(log.ts), // Computes individual running timelines (e.g. 5m ago)
+          ts: log.ts,
+          col: "#5ae06e" // 🟢 Clean green text formatting highlight
+        });
       }
     }
 
