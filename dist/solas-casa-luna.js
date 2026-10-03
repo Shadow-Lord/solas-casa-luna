@@ -1,4 +1,4 @@
-// v2.1.15 stable · build no.101
+// v2.1.16 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.15';
+const VERSION = '2.1.16';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -5426,21 +5426,13 @@ _updateBottomTiles() {
           { domain: 'automation' },
           { domain: 'binary_sensor', device_class: ['motion', 'occupancy', 'door', 'window', 'gas', 'smoke', 'safety'] },
         ]);
-        
-    // ⚡ Include modern persistent notifications into our activity scan roster
-    if (this._hass) {
-      for (const id in this._hass.states) {
-        if (id.startsWith('persistent_notification.emma_log_')) {
-          ids.push(id);
-        }
-      }
-    }
 
     const rows = [];
+    
+    // 1. Process all the default auto-discovered loops (Curfew rules, Loop engines, etc.)
     for (const id of ids) {
       const s = this._hass?.states?.[id];
       if (!s) continue;
-      
       const changed = s.last_changed || s.last_updated;
       const changedMs = changed ? new Date(changed).getTime() : null;
       const ago = changedMs ? this._relTime(changedMs) : '';
@@ -5449,18 +5441,6 @@ _updateBottomTiles() {
       let col = '#7fd4ff';
       const dom = id.split('.')[0];
       
-      // ⚡ INTERCEPT PERSISTENT LOG ENTRIES SO THEY DISPLAY BEAUTIFULLY
-      if (id.startsWith('persistent_notification.emma_log_')) {
-        rows.push({
-          name: "Emma Internet Time Added",
-          value: "+30 MINS",
-          ago: ago,
-          ts: changedMs || 0,
-          col: "#5ae06e" // 🟢 Glowing green text highlight
-        });
-        continue;
-      }
-
       if (dom === 'binary_sensor') {
         const dc = s.attributes?.device_class || '';
         const on = ['on', 'open'].includes(String(s.state).toLowerCase());
@@ -5473,16 +5453,37 @@ _updateBottomTiles() {
       } else if (dom === 'automation') { 
         const en = String(s.state) === 'on'; val = en ? 'Enabled' : 'Off'; col = en ? '#5ae06e' : '#7fa3c4'; 
       }
-      
       rows.push({ name: this._name(id), value: val, ago, ts: changedMs || 0, col });
     }
+
+    // ⚡ 2. SURGICALLY COLLECT AND STACK EVERY UNIQUE EMMA NOTIFICATION
+    if (this._hass && this._hass.states) {
+      for (const entId in this._hass.states) {
+        if (entId.startsWith('persistent_notification.emma_log_')) {
+          const s = this._hass.states[entId];
+          if (s) {
+            const changed = s.last_changed || s.last_updated;
+            const changedMs = changed ? new Date(changed).getTime() : Date.now();
+            rows.push({
+              name: "Emma Internet Time Added",
+              value: "+30 MINS",
+              ago: this._relTime(changedMs),
+              ts: changedMs,
+              col: "#5ae06e" // 🟢 Clean green text formatting highlight
+            });
+          }
+        }
+      }
+    }
+
+    // Sort every entry chronologically so new presses immediately hit the top slot
     rows.sort((a, b) => b.ts - a.ts);
     const html = rows.slice(0, 12).map(r =>
       `<div style="position:relative;display:flex;align-items:baseline;justify-content:space-between;gap:8px;height:30px;padding:0 14px">
         <span style="font-size:11px;color:#cce4ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">${esc(r.name)}</span>
         <span style="font-size:11px;font-weight:650;color:${r.col};white-space:nowrap;flex-shrink:0">${esc(String(r.value))}</span>
         <span style="font-size:10px;color:#7fa3c4;white-space:nowrap;flex-shrink:0;min-width:48px;text-align:right">${esc(r.ago)}</span>
-      </div>`).join('') || '<div class="hint" style="padding:10px 14px">No recent events. Add automations or sensors in the editor → Recent Events.</div>';
+      </div>`).join('') || '<div class="hint" style="padding:10px 14px">No recent events.</div>';
     const el = this._q('#evRows');
     if (el && el._h !== html) { el.innerHTML = html; el._h = html; }
   }
