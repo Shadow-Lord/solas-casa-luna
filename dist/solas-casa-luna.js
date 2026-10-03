@@ -1,4 +1,4 @@
-// v2.1.24 stable · build no.101
+// v2.1.25 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.24';
+const VERSION = '2.1.25';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -5441,8 +5441,8 @@ _updateBottomTiles() {
     for (const id of ids) {
       const s = this._hass?.states?.[id];
       if (!s) continue;
-      // Skip the raw tracking helper from cluttering the loop entries
-      if (id === 'input_text.emma_button_clicks') continue;
+      // Skip the main script tracker state here (we pull its un-erasable database stack below instead)
+      if (id === 'script.emma_grant_30_mins_extra') continue;
 
       const changed = s.last_changed || s.last_updated;
       const changedMs = changed ? new Date(changed).getTime() : null;
@@ -5452,7 +5452,7 @@ _updateBottomTiles() {
       let col = '#7fd4ff';
       const dom = id.split('.');
       
-      if (dom[0] === 'binary_sensor') {
+      if (dom === 'binary_sensor') {
         const dc = s.attributes?.device_class || '';
         const on = ['on', 'open'].includes(String(s.state).toLowerCase());
         if (/gas|smoke|carbon|safety/.test(dc)) { val = on ? 'ALERT' : 'Clear'; col = on ? '#ff5a5a' : '#7fa3c4'; }
@@ -5461,35 +5461,35 @@ _updateBottomTiles() {
         else if (/occupancy|presence/.test(dc)) { val = on ? 'Occupied' : 'Clear'; col = on ? '#ffb45a' : '#7fa3c4'; }
         else if (/moisture|water/.test(dc)) { val = on ? 'Wet' : 'Dry'; col = on ? '#ff5a5a' : '#7fa3c4'; }
         else { val = on ? 'Triggered' : 'Clear'; col = on ? '#ffb45a' : '#7fa3c4'; }
-      } else if (dom[0] === 'automation') { 
+      } else if (dom === 'automation') { 
         const en = String(s.state) === 'on'; val = en ? 'Enabled' : 'Off'; col = en ? '#5ae06e' : '#7fa3c4'; 
       }
       rows.push({ name: this._name(id), value: val, ago, ts: changedMs || 0, col });
     }
 
-    // ⚡ 2. EXTRACTION LAYER: READ EVERY INDEPENDENT TRANSACTION FOR HER CLICKS FROM THE HARD DRIVE
-    const textEntity = this._hass?.states['input_text.emma_button_clicks'];
-    if (textEntity && this._hass) {
-      // Reaches directly into the frontend history event bus array for this specific entity tracking stream
-      const textHistory = this._hass.themes?.states?.['input_text.emma_button_clicks']?.history || [];
+    // ⚡ 2. SURGICALLY READ EVERY UNIQUE HISTORICAL BUTTON TAP STORED ON THE HARD DRIVE
+    const emmaScript = this._hass?.states['script.emma_grant_30_mins_extra'];
+    if (emmaScript && this._hass) {
+      // Pull the system-wide state history array directly out of the frontend event bus context cache
+      const databaseHistory = this._hass.themes?.states?.['script.emma_grant_30_mins_extra']?.history || [];
       
-      textHistory.forEach((entry) => {
-        // Every state change (even if her time balance value is identical) is recorded as a true independent row item
-        if (entry.state && entry.state.includes('Time Added')) {
-          const changeTime = new Date(entry.last_changed || entry.lc).getTime();
+      databaseHistory.forEach((run) => {
+        // Every time the button script ran, its state flipped 'on' in the historical logs
+        if (run.state === 'on' || run.s === 'on') {
+          const runTime = new Date(run.last_changed || run.lc).getTime();
           rows.push({
             name: "Emma Internet Time Added",
             value: "+30 MINS",
-            ago: this._relTime(changeTime),
-            ts: changeTime,
-            col: "#5ae06e" // 🟢 Neon green text formatting highlight
+            ago: this._relTime(runTime),
+            ts: runTime,
+            col: "#5ae06e" // 🟢 Neon green text highlight
           });
         }
       });
 
-      // Gutter Fallback: Ensure at least the last trigger is visible if the database cache is clearing out
-      if (textHistory.length === 0 && textEntity.state && textEntity.state.includes('Time Added')) {
-        const fallbackTime = new Date(textEntity.last_changed || textEntity.last_updated).getTime();
+      // Gutter Fallback: If the history cache hasn't loaded yet, display the single last execution event natively
+      if (databaseHistory.length === 0 && emmaScript.attributes.last_triggered) {
+        const fallbackTime = new Date(emmaScript.attributes.last_triggered).getTime();
         rows.push({ name: "Emma Internet Time Added", value: "+30 MINS", ago: this._relTime(fallbackTime), ts: fallbackTime, col: "#5ae06e" });
       }
     }
