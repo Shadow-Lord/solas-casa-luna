@@ -1,4 +1,4 @@
-// v2.1.41 stable · build no.101
+// v2.1.42 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.41';
+const VERSION = '2.1.42';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3158,7 +3158,9 @@ _wCameras(cams) {
       if (e.target.id === 'camFsClose') return;
       this._openCameraFullscreen(el.getAttribute('data-cam-tap'), el.getAttribute('data-cam-label') || 'Camera', el.getAttribute('data-cam-url') || '');
     }));
-    this._refreshCameraStreams();
+    if (!this._cameraActive) {
+      this._refreshCameraStreams();
+    }
     root.querySelectorAll('[data-more]').forEach(el => el.addEventListener('click', e => {
       if (e.target.closest('[data-toggle],[data-slider],[data-select],[data-press]')) return;
       this._fireMoreInfo(el.getAttribute('data-more'));
