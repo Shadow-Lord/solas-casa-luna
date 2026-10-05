@@ -1,4 +1,4 @@
-// v2.1.34 stable · build no.101
+// v2.1.35 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.34';
+const VERSION = '2.1.35';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2991,53 +2991,17 @@ runPricing();
   /* dual camera tiles (go2rtc/WebRTC iframe streams) */
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
-    
-    // Create an un-wipeable global node cache on the document body if it doesn't exist
-    if (!window.__persistentSolasCams) {
-      window.__persistentSolasCams = new Map();
-    }
-
     const cells = cams.map(([label, src]) => {
       const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
-      const containerId = `solas-persistent-holder-${label.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`;
-      
-      let body;
-      if (url) {
-        // Build the physical iframe element globally in browser storage ONCE
-        if (!window.__persistentSolasCams.has(containerId) || window.__persistentSolasCams.get(containerId).__lastUrl !== url) {
-          const iframe = document.createElement('iframe');
-          iframe.src = url;
-          iframe.setAttribute('allowfullscreen', 'true');
-          iframe.style.cssText = "width:100%; height:100%; border:none; display:block; position:absolute; top:0; left:0; object-fit:fill;";
-          iframe.__lastUrl = url;
-          window.__persistentSolasCams.set(containerId, iframe);
-        }
-        
-        // Output a hollow, static container shell that Home Assistant's state loop won't mind redrawing
-        body = `<div id="${containerId}" class="cam-frame-holder" style="width:100%; height:100%; position:absolute; top:0; left:0; background:#000;"></div>`;
-      } else {
-        body = src
+      const body = url
+        ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
+        : src
           ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
           : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
-      }
-
-      return `<div class="pw-cam" style="position:relative; width:100%; height:100%; overflow:hidden;" ${src ? `data-cam-tap="\${esc(src)}" data-cam-label="\${esc(label)}" data-cam-url="\${esc(url)}"` : ''}>
-        <div style="width:100%; height:100%; position:relative;">${body}</div>
+      return `<div class="pw-cam" ${src ? `data-cam-tap="${esc(src)}" data-cam-label="${esc(label)}" data-cam-url="${esc(url)}"` : ''}>
+        ${body}
         <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
     }).join('');
-
-    // Wait for the parent element to complete its redraw step, then physically drop the running iframe into the placeholder box
-    setTimeout(() => {
-      const root = this.shadowRoot || this;
-      window.__persistentSolasCams.forEach((iframe, containerId) => {
-        const holder = root.getElementById(containerId);
-        // If the placeholder is empty, adopt the running global iframe element
-        if (holder && holder.firstChild !== iframe) {
-          holder.appendChild(iframe);
-        }
-      });
-    }, 25);
-
     return `<div class="pw-cams">${cells}</div>`;
   }
 
