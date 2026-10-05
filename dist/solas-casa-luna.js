@@ -1,4 +1,4 @@
-// v2.1.30 stable · build no.101
+// v2.1.31 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.30';
+const VERSION = '2.1.31';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2992,51 +2992,62 @@ runPricing();
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
     
-    // Create a local storage object on the card if it doesn't exist yet
-    if (!this._domIframes) {
-      this._domIframes = {};
-    }
+    // Convert go2rtc HTTP base addresses to a native browser WebSocket address
+    const wsBase = base.replace(/^http/, 'ws');
 
     const cells = cams.map(([label, src]) => {
-      const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
+      // Build a pure, direct go2rtc WebSocket stream path
+      const wsUrl = src && wsBase ? `${wsBase}/api/ws?src=${encodeURIComponent(src)}` : '';
       
       let body;
-      if (url) {
-        // Build the physical iframe element only once and save it in memory
-        if (!this._domIframes[label] || this._domIframes[label].__lastUrl !== url) {
-          const iframe = document.createElement('iframe');
-          iframe.src = url;
-          iframe.setAttribute('allowfullscreen', 'true');
-          iframe.style.width = '100%';
-          iframe.style.height = '100%';
-          iframe.style.border = 'none';
-          iframe.__lastUrl = url; // track changes safely
-          this._domIframes[label] = iframe;
-        }
-        
-        // Use a unique container div that will hold our live iframe asset
-        body = `<div class="cam-iframe-container" data-cam-label="${esc(label)}"></div>`;
+      if (wsUrl) {
+        // Build a raw HTML5 video player styled to perfectly fit 100% of the box space
+        body = `<video 
+          style="width:100%; height:100%; object-fit:fill; background:#000;" 
+          autoplay 
+          playsinline 
+          muted 
+          data-ws-stream="${esc(wsUrl)}">
+        </video>`;
       } else {
         body = src
           ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
           : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
       }
 
-      // Fixed syntax templates for click configurations
-      return `<div class="pw-cam" ${src ? `data-cam-tap="\${esc(src)}" data-cam-label="esc(label)" data-cam-url="{esc(url)}"` : ''}>
+      return `<div class="pw-cam" ${src ? `data-cam-tap="esc(src)" data-cam-label="{esc(label)}"` : ''}>
         ${body}
         <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
     }).join('');
 
-    // Safely insert the persistent live iframe element back into the card view
+    // Establish a direct connection handler to go2rtc's WebSocket engine
     setTimeout(() => {
       const root = this.shadowRoot || this;
-      root.querySelectorAll('.cam-iframe-container').forEach(container => {
-        const label = container.getAttribute('data-cam-label');
-        const liveIframe = this._domIframes[label];
-        if (liveIframe && container.children.length === 0) {
-          container.appendChild(liveIframe);
-        }
+      root.querySelectorAll('video[data-ws-stream]').forEach(video => {
+        if (video.srcObject || video.__connected) return;
+        video.__connected = true;
+
+        const wsUrl = video.getAttribute('data-ws-stream');
+        const ws = new WebSocket(wsUrl);
+        const pc = new RTCPeerConnection();
+
+        // Feed video packets directly to the video screen
+        pc.ontrack = (e) => { video.srcObject = e.streams[0]; };
+        
+        ws.onmessage = async (e) => {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'offer') {
+            await pc.setRemoteDescription(new RTCSessionDescription(msg));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            ws.send(JSON.stringify({type: 'answer', sdp: pc.localDescription.sdp}));
+          } else if (msg.type === 'candidate') {
+            await pc.addIceCandidate(new RTCIceCandidate(msg));
+          }
+        };
+        
+        // Auto-negotiate audio/video channels
+        pc.addTransceiver('video', {direction: 'recvonly'});
       });
     }, 0);
 
