@@ -1,4 +1,4 @@
-// v2.1.26 stable · build no.101
+// v2.1.27 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.26';
+const VERSION = '2.1.27';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2992,7 +2992,7 @@ runPricing();
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
     const cells = cams.map(([label, src]) => {
-      const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
+      const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=webrtc` : '';
       const body = url
         ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
         : src
