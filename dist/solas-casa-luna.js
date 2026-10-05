@@ -1,4 +1,4 @@
-// v2.1.38 stable · build no.101
+// v2.1.39 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.38';
+const VERSION = '2.1.39';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2989,45 +2989,35 @@ runPricing();
   }
 
   /* dual camera tiles (go2rtc/WebRTC iframe streams) */
-  _wCameras(cams) {
+_wCameras(cams) {
     const base = this.config.camera_stream_base || '';
-    
-    // Create an isolated storage layer on the card instance to save our playing iframes
-    if (!this._persistentIframes) {
-      this._persistentIframes = {};
-    }
-
     const cells = cams.map(([label, src]) => {
       const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
-      const uniqueSlotId = `solas-cam-slot-${label.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`;
-      
-      let body;
-      if (url) {
-        // Construct the physical iframe object inside memory ONCE and never change its source path
-        if (!this._persistentIframes[uniqueSlotId] || this._persistentIframes[uniqueSlotId].__lastUrl !== url) {
-          const iframe = document.createElement('iframe');
-          iframe.src = url;
-          iframe.setAttribute('allowfullscreen', 'true');
-          iframe.style.cssText = "width:100%; height:100%; border:none; display:block; position:absolute; top:0; left:0; object-fit:fill;";
-          iframe.__lastUrl = url;
-          this._persistentIframes[uniqueSlotId] = iframe;
-        }
-        // Output the immutable marker placeholder shell
-        body = `<div id="${uniqueSlotId}" class="cam-iframe-bypass-marker" data-slot-id="${uniqueSlotId}"></div>`;
-      } else {
-        body = src
+
+      const body = url
+        ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
+        : src
           ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
           : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
-      }
 
-      // Natively fixed string template parameter bindings for popup tap actions
-      return `<div class="pw-cam" style="position:relative; width:100%; height:100%; overflow:hidden;" ${src ? `data-cam-tap="\${esc(src)}" data-cam-label="esc(label)" data-cam-url="{esc(url)}"` : ''}>
-        <div style="width:100%; height:100%; position:relative;">${body}</div>
-        <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
+      // ⭐ PATCH: add onclick to set cameraActive flag
+      const camAttrs = src
+        ? `data-cam-tap="${esc(src)}"
+           data-cam-label="${esc(label)}"
+           data-cam-url="${esc(url)}"
+           onclick="this.closest('solas-casa-luna')._cameraActive = true"`
+        : '';
+
+      return `
+        <div class="pw-cam" ${camAttrs}>
+          ${body}
+          <div class="clbl">${esc(label)}</div>
+          <div class="crec">LIVE</div>
+        </div>`;
     }).join('');
-    
+
     return `<div class="pw-cams">${cells}</div>`;
-  }
+}
 
   /* climate control card: current temp + target steppers + mode/fan/swing chips + eco (climate.*) */
   _wClimate(label, entId) {
@@ -4785,21 +4775,8 @@ runPricing();
     this._updateStatusIcons();
 
     /* detail view refresh + background */
-    if (this._activeView !== 'dashboard' && !this._panelBusy) this._renderDetail();
+    if (this._activeView !== 'dashboard' && !this._panelBusy && !this._cameraActive) this._renderDetail();
     this._setBackground();
-
-    // ════════════ CAMERA SHIELD INJECTION ════════════
-    // Wait for the browser to draw the new data string, then restore our live iframe objects
-    setTimeout(() => {
-      const root = this.shadowRoot || this;
-      root.querySelectorAll('.cam-iframe-bypass-marker').forEach(marker => {
-        const slotId = marker.getAttribute('data-slot-id');
-        const activeIframe = this._persistentIframes ? this._persistentIframes[slotId] : null;
-        if (activeIframe && marker.firstChild !== activeIframe) {
-          marker.appendChild(activeIframe);
-        }
-      });
-    }, 10);
   }
 
   /* refresh the 6 bottom tiles: value, state colour, live room-card icon animation */
