@@ -1,4 +1,4 @@
-// v2.1.39 stable · build no.101
+// v2.1.40 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.39';
+const VERSION = '2.1.40';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -863,6 +863,7 @@ class CasaLuna extends HTMLElement {
     this._prevPvWaveBx = -1;
     this._prevPvWaveBy = -1;
     this._prevMoonPhase = -1;
+    this._cameraActive = false;
   }
 
   setConfig(config) {
@@ -2791,12 +2792,27 @@ runPricing();
     const panel = this._q('#detailPanel');
     if (!panel) return;
     /* DASHBOARD = the main card itself; tapping it just closes any open panel */
-    if (view === 'dashboard') { this._closeView(); return; }
+    if (view === 'dashboard') {
+        this._cameraActive = false;   // reset when closing
+        this._closeView();
+        return;
+    }
     /* toggle: tapping the active tile again closes the panel */
     if (this._activeView === view && panel.classList.contains('open')) {
-      this._closeView();
-      return;
+        this._cameraActive = false;   // reset when closing
+        this._closeView();
+        return;
     }
+
+    // ⭐ CAMERA DETECTION ⭐
+    // If the view name starts with "camera-" or matches your camera view key,
+    // mark camera as active so _update() stops refreshing the panel.
+    if (view.startsWith('camera')) {
+        this._cameraActive = true;
+    } else {
+        this._cameraActive = false;
+    }
+
     this._activeView = view;
     this._panelBusy = false;
     this.shadowRoot.querySelectorAll('.navtile').forEach(t =>
@@ -2813,6 +2829,7 @@ runPricing();
     if (panel) panel.classList.remove('open');
     this._activeView = 'dashboard';
     this._panelBusy = false;
+    this._cameraActive = false;   // ⭐ reset camera mode
     this.shadowRoot.querySelectorAll('.navtile').forEach(t => t.classList.remove('nav-active'));
   }
 
