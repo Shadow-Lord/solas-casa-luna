@@ -1,4 +1,4 @@
-// v2.1.44 stable · build no.101
+// v2.1.45 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.44';
+const VERSION = '2.1.45';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3006,35 +3006,21 @@ runPricing();
   }
 
   /* dual camera tiles (go2rtc/WebRTC iframe streams) */
-_wCameras(cams) {
+  _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
     const cells = cams.map(([label, src]) => {
       const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
-
       const body = url
         ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
         : src
           ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
           : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
-
-      // ⭐ PATCH: add onclick to set cameraActive flag
-      const camAttrs = src
-        ? `data-cam-tap="${esc(src)}"
-           data-cam-label="${esc(label)}"
-           data-cam-url="${esc(url)}"
-           onclick="this.closest('solas-casa-luna')._cameraActive = true"`
-        : '';
-
-      return `
-        <div class="pw-cam" ${camAttrs}>
-          ${body}
-          <div class="clbl">${esc(label)}</div>
-          <div class="crec">LIVE</div>
-        </div>`;
+      return `<div class="pw-cam" ${src ? `data-cam-tap="${esc(src)}" data-cam-label="${esc(label)}" data-cam-url="${esc(url)}"` : ''}>
+        ${body}
+        <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
     }).join('');
-
     return `<div class="pw-cams">${cells}</div>`;
-}
+  }
 
   /* climate control card: current temp + target steppers + mode/fan/swing chips + eco (climate.*) */
   _wClimate(label, entId) {
