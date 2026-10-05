@@ -1,4 +1,4 @@
-// v2.1.32 stable · build no.101
+// v2.1.33 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.32';
+const VERSION = '2.1.33';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2992,23 +2992,34 @@ runPricing();
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
     
-    // Create an initialization cache map if it doesn't exist yet
-    if (!this._cachedCamHtml) {
-      this._cachedCamHtml = {};
+    // Initialize a global memory cache on this card instance to store persistent HTML elements
+    if (!this._persistentCamElements) {
+      this._persistentCamElements = new Map();
     }
 
     const cells = cams.map(([label, src]) => {
-      // Re-enable the rock-solid MSE connection format
       const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
+      
+      // Create a unique identifier for this camera tile slot
+      const containerId = `cam-container-${label.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`;
       
       let body;
       if (url) {
-        // Enforce absolute styles right onto the iframe element so it cannot shrink
-        body = `<iframe 
-          src="${esc(url)}" 
-          allowfullscreen 
-          style="width:100%; height:100%; border:none; display:block; position:absolute; top:0; left:0; object-fit:fill;">
-        </iframe>`;
+        // Look up if we have already built a persistent iframe element for this camera slot
+        let iframe = this._persistentCamElements.get(containerId);
+        
+        if (!iframe || iframe.__lastUrl !== url) {
+          // Create the physical iframe element strictly in memory ONCE
+          iframe = document.createElement('iframe');
+          iframe.src = url;
+          iframe.setAttribute('allowfullscreen', 'true');
+          iframe.style.cssText = "width:100%; height:100%; border:none; display:block; position:absolute; top:0; left:0; object-fit:fill;";
+          iframe.__lastUrl = url; // anchor url to verify changes later
+          this._persistentCamElements.set(containerId, iframe);
+        }
+        
+        // Output an immutable layout container shell that will house the iframe element
+        body = `<div id="${containerId}" class="cam-frame-holder" style="width:100%; height:100%; position:absolute; top:0; left:0;"></div>`;
       } else {
         body = src
           ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
@@ -3016,24 +3027,23 @@ runPricing();
       }
 
       return `<div class="pw-cam" style="position:relative; width:100%; height:100%; overflow:hidden;" ${src ? `data-cam-tap="\${esc(src)}" data-cam-label="\${esc(label)}" data-cam-url="\${esc(url)}"` : ''}>
-        ${body}
+        <div style="width:100%; height:100%; position:relative;">${body}</div>
         <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
     }).join('');
 
-    // Safe render gate: check if the overall layout string actually changed
-    const currentHtmlStr = `<div class="pw-cams">${cells}</div>`;
-    
-    if (this._lastCameraLayout === currentHtmlStr) {
-      // If the cameras didn't change names or paths, return an explicit ignore container
-      // This stops Home Assistant updates from tearing down the iframe buffer
-      return this._lastCameraDomElement || currentHtmlStr;
-    }
+    // Wait 10 milliseconds for Home Assistant to append the fresh HTML string structure to the DOM
+    setTimeout(() => {
+      const root = this.shadowRoot || this;
+      this._persistentCamElements.forEach((iframe, containerId) => {
+        const holder = root.getElementById(containerId);
+        // If the holder box exists and does not currently have our iframe tucked inside, mount it natively
+        if (holder && holder.firstChild !== iframe) {
+          holder.appendChild(iframe);
+        }
+      });
+    }, 10);
 
-    // Save the state to memory if a genuine configuration adjustment happened
-    this._lastCameraLayout = currentHtmlStr;
-    this._lastCameraDomElement = currentHtmlStr;
-
-    return currentHtmlStr;
+    return `<div class="pw-cams">${cells}</div>`;
   }
 
   /* climate control card: current temp + target steppers + mode/fan/swing chips + eco (climate.*) */
