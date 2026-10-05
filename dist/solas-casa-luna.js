@@ -1,4 +1,4 @@
-// v2.1.31 stable · build no.101
+// v2.1.32 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.31';
+const VERSION = '2.1.32';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2992,66 +2992,48 @@ runPricing();
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
     
-    // Convert go2rtc HTTP base addresses to a native browser WebSocket address
-    const wsBase = base.replace(/^http/, 'ws');
+    // Create an initialization cache map if it doesn't exist yet
+    if (!this._cachedCamHtml) {
+      this._cachedCamHtml = {};
+    }
 
     const cells = cams.map(([label, src]) => {
-      // Build a pure, direct go2rtc WebSocket stream path
-      const wsUrl = src && wsBase ? `${wsBase}/api/ws?src=${encodeURIComponent(src)}` : '';
+      // Re-enable the rock-solid MSE connection format
+      const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
       
       let body;
-      if (wsUrl) {
-        // Build a raw HTML5 video player styled to perfectly fit 100% of the box space
-        body = `<video 
-          style="width:100%; height:100%; object-fit:fill; background:#000;" 
-          autoplay 
-          playsinline 
-          muted 
-          data-ws-stream="${esc(wsUrl)}">
-        </video>`;
+      if (url) {
+        // Enforce absolute styles right onto the iframe element so it cannot shrink
+        body = `<iframe 
+          src="${esc(url)}" 
+          allowfullscreen 
+          style="width:100%; height:100%; border:none; display:block; position:absolute; top:0; left:0; object-fit:fill;">
+        </iframe>`;
       } else {
         body = src
           ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
           : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
       }
 
-      return `<div class="pw-cam" ${src ? `data-cam-tap="esc(src)" data-cam-label="{esc(label)}"` : ''}>
+      return `<div class="pw-cam" style="position:relative; width:100%; height:100%; overflow:hidden;" ${src ? `data-cam-tap="\${esc(src)}" data-cam-label="\${esc(label)}" data-cam-url="\${esc(url)}"` : ''}>
         ${body}
         <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
     }).join('');
 
-    // Establish a direct connection handler to go2rtc's WebSocket engine
-    setTimeout(() => {
-      const root = this.shadowRoot || this;
-      root.querySelectorAll('video[data-ws-stream]').forEach(video => {
-        if (video.srcObject || video.__connected) return;
-        video.__connected = true;
+    // Safe render gate: check if the overall layout string actually changed
+    const currentHtmlStr = `<div class="pw-cams">${cells}</div>`;
+    
+    if (this._lastCameraLayout === currentHtmlStr) {
+      // If the cameras didn't change names or paths, return an explicit ignore container
+      // This stops Home Assistant updates from tearing down the iframe buffer
+      return this._lastCameraDomElement || currentHtmlStr;
+    }
 
-        const wsUrl = video.getAttribute('data-ws-stream');
-        const ws = new WebSocket(wsUrl);
-        const pc = new RTCPeerConnection();
+    // Save the state to memory if a genuine configuration adjustment happened
+    this._lastCameraLayout = currentHtmlStr;
+    this._lastCameraDomElement = currentHtmlStr;
 
-        // Feed video packets directly to the video screen
-        pc.ontrack = (e) => { video.srcObject = e.streams[0]; };
-        
-        ws.onmessage = async (e) => {
-          const msg = JSON.parse(e.data);
-          if (msg.type === 'offer') {
-            await pc.setRemoteDescription(new RTCSessionDescription(msg));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            ws.send(JSON.stringify({type: 'answer', sdp: pc.localDescription.sdp}));
-          } else if (msg.type === 'candidate') {
-            await pc.addIceCandidate(new RTCIceCandidate(msg));
-          }
-        };
-        
-        // Auto-negotiate audio/video channels
-        pc.addTransceiver('video', {direction: 'recvonly'});
-      });
-    }, 0);
-
-    return `<div class="pw-cams">${cells}</div>`;
+    return currentHtmlStr;
   }
 
   /* climate control card: current temp + target steppers + mode/fan/swing chips + eco (climate.*) */
