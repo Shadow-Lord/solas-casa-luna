@@ -1,4 +1,4 @@
-// v2.1.47 stable · build no.101
+// v2.1.48 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.47';
+const VERSION = '2.1.48';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3740,7 +3740,7 @@ runPricing();
     });
   }
   _openCameraFullscreen(entityId, label, go2rtcUrl) {
-  console.log('[SCL] _openCameraFullscreen', { id, label, url, cameraActive: this._cameraActive });
+  console.log('[SCL] _openCameraFullscreen', { label, url, cameraActive: this._cameraActive });
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center';
     ov.innerHTML = `<div style="position:relative;width:min(92vw,1280px);aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);border:1px solid rgba(120,180,255,.3)">
