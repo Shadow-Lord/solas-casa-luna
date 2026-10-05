@@ -1,4 +1,4 @@
-// v2.1.36 stable · build no.101
+// v2.1.37 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.36';
+const VERSION = '2.1.37';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2992,58 +2992,32 @@ runPricing();
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
     
-    // Create an internal tracker for active streams if it doesn't exist
-    if (!this._activeLiveStreams) {
-      this._activeLiveStreams = new Set();
+    // Create a physical DOM storage container on this instance if it doesn't exist
+    if (!this._cachedCamHtmlElement) {
+      this._cachedCamHtmlElement = null;
+    }
+
+    // If we have already built the camera frames once before, return the EXACT same elements
+    // This completely stops Home Assistant from destroying and reloading the playing iframe stream
+    if (this._cachedCamHtmlElement) {
+      return this._cachedCamHtmlElement;
     }
 
     const cells = cams.map(([label, src]) => {
       const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
-      
-      let body;
-      if (url) {
-        body = `<iframe src="${esc(url)}" allowfullscreen style="width:100%; height:100%; border:none; display:block; object-fit:fill;"></iframe>`;
-      } else if (src && src.startsWith('camera.')) {
-        // FIXED: Replace the broken <img> tag with a hardware-accelerated <video> stream player
-        body = `
-        </video>`;
-      } else {
-        body = src
+      const body = url
+        ? `<iframe src="${esc(url)}" allowfullscreen style="width:100%; height:100%; border:none; display:block; object-fit:fill;"></iframe>`
+        : src
           ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
           : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
-      }
-
-      return `<div class="pw-cam" style="position:relative; width:100%; height:100%; overflow:hidden;" ${src ? `data-cam-tap="\${esc(src)}" data-cam-label="\${esc(label)}" data-cam-url="\${esc(url)}"` : ''}>
+      return `<div class="pw-cam" style="position:relative; width:100%; height:100%; overflow:hidden;" ${src ? `data-cam-tap="\${esc(src)}" data-cam-label="esc(label)" data-cam-url="{esc(url)}"` : ''}>
         ${body}
         <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
     }).join('');
 
-    // Ask Home Assistant to bind the live stream player directly to the video element
-    setTimeout(() => {
-      const root = this.shadowRoot || this;
-      root.querySelectorAll('video[data-stream-entity]').forEach(async (video) => {
-        const entityId = video.getAttribute('data-stream-entity');
-        if (this._activeLiveStreams.has(entityId) || !this._hass) return;
-        this._activeLiveStreams.add(entityId);
-
-        try {
-          // Request the secure stream source channel from Home Assistant's backend
-          const streamData = await this._hass.callWS({
-            type: 'camera/stream',
-            camera_entity_id: entityId
-          });
-          
-          if (streamData && streamData.url) {
-            // Attach the live stream safely to the video player container
-            video.src = this._hass.hassUrl ? this._hass.hassUrl(streamData.url) : streamData.url;
-          }
-        } catch (e) {
-          this._activeLiveStreams.delete(entityId);
-        }
-      });
-    }, 50);
-
-    return `<div class="pw-cams">${cells}</div>`;
+    // Save the finalized HTML structure directly to card memory
+    this._cachedCamHtmlElement = `<div class="pw-cams">${cells}</div>`;
+    return this._cachedCamHtmlElement;
   }
 
   /* climate control card: current temp + target steppers + mode/fan/swing chips + eco (climate.*) */
