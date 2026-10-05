@@ -1,4 +1,4 @@
-// v2.1.29 stable · build no.101
+// v2.1.30 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.29';
+const VERSION = '2.1.30';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2991,17 +2991,55 @@ runPricing();
   /* dual camera tiles (go2rtc/WebRTC iframe streams) */
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
+    
+    // Create a local storage object on the card if it doesn't exist yet
+    if (!this._domIframes) {
+      this._domIframes = {};
+    }
+
     const cells = cams.map(([label, src]) => {
-      const url = src && base ? `${base}/api/webrtc?src=${encodeURIComponent(src)}` : '';
-      const body = url
-        ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
-        : src
+      const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
+      
+      let body;
+      if (url) {
+        // Build the physical iframe element only once and save it in memory
+        if (!this._domIframes[label] || this._domIframes[label].__lastUrl !== url) {
+          const iframe = document.createElement('iframe');
+          iframe.src = url;
+          iframe.setAttribute('allowfullscreen', 'true');
+          iframe.style.width = '100%';
+          iframe.style.height = '100%';
+          iframe.style.border = 'none';
+          iframe.__lastUrl = url; // track changes safely
+          this._domIframes[label] = iframe;
+        }
+        
+        // Use a unique container div that will hold our live iframe asset
+        body = `<div class="cam-iframe-container" data-cam-label="${esc(label)}"></div>`;
+      } else {
+        body = src
           ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
           : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
-      return `<div class="pw-cam" ${src ? `data-cam-tap="${esc(src)}" data-cam-label="${esc(label)}" data-cam-url="${esc(url)}"` : ''}>
+      }
+
+      // Fixed syntax templates for click configurations
+      return `<div class="pw-cam" ${src ? `data-cam-tap="\${esc(src)}" data-cam-label="esc(label)" data-cam-url="{esc(url)}"` : ''}>
         ${body}
         <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
     }).join('');
+
+    // Safely insert the persistent live iframe element back into the card view
+    setTimeout(() => {
+      const root = this.shadowRoot || this;
+      root.querySelectorAll('.cam-iframe-container').forEach(container => {
+        const label = container.getAttribute('data-cam-label');
+        const liveIframe = this._domIframes[label];
+        if (liveIframe && container.children.length === 0) {
+          container.appendChild(liveIframe);
+        }
+      });
+    }, 0);
+
     return `<div class="pw-cams">${cells}</div>`;
   }
 
