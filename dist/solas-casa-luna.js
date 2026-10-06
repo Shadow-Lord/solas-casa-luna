@@ -1,4 +1,4 @@
-// v2.1.60 stable · build no.101
+// v2.1.61 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.60';
+const VERSION = '2.1.61';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3286,6 +3286,23 @@ runPricing();
     const prevScroll = inner.scrollTop;
     inner.innerHTML = `<h3>${meta[1]}</h3><div class="dsub">${meta[2]}</div>${body}`;
     this._bindPanelWidgets(inner);
+    // ⭐ CAMERA TILE CLICK HANDLER ⭐
+    inner.querySelectorAll('.pw-cam').forEach(cam => {
+      cam.addEventListener('click', () => {
+        this._cameraActive = true;
+
+        const url = cam.dataset.camUrl;
+        const label = cam.dataset.camLabel || 'Camera';
+
+        // Prevent periodic refresh
+        this._panelBusy = true;
+
+        // Replace detail panel with camera iframe
+        this._q('#detailInner').innerHTML =
+          `<h3>${label}</h3><div class="dsub">Live Camera</div>
+           <iframe src="${url}" allowfullscreen style="width:100%;height:100%;border:none;"></iframe>`;
+      });
+    });
     /* generic list also needs its row binding */
     inner.querySelectorAll('.erow').forEach(r => {
       r.addEventListener('click', e => {
@@ -4789,7 +4806,7 @@ runPricing();
     if (this._activeView !== 'dashboard' && !this._panelBusy) this._renderDetail();
     
     if (!this._cameraActive) {
-      //this._setBackground();
+      this._setBackground();
     }
   }
 
