@@ -1,4 +1,4 @@
-// v2.1.66 stable · build no.101
+// v2.1.67 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.66';
+const VERSION = '2.1.67';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3261,7 +3261,7 @@ runPricing();
   }
 
   _renderDetail() {
-    console.log('[SCL] _renderDetail, cameraActive=', this._cameraActive);
+    console.log('[SCL] _renderDetail, cameraActive =', this._cameraActive);
 
     const view = this._activeView;
     if (view === 'dashboard') return;
@@ -4427,7 +4427,7 @@ runPricing();
   /* ═══════════════════════ UPDATE — live values (every hass change / 15s) ═══════════════════════ */
   _update(tick = false) {
   //if (true) return;
-  console.log('[SCL] _update, cameraActive=', this._cameraActive);
+  console.log('[SCL] _update, cameraActive =', this._cameraActive);
     if (!this._built || !this._hass) return;
     const c = this._lc || this.config;
     this._applyTheme();
@@ -4803,7 +4803,7 @@ runPricing();
     this._updateStatusIcons();
 
     /* detail view refresh + background */
-  //  if (this._activeView !== 'dashboard' && !this._panelBusy) this._renderDetail();
+    if (this._activeView !== 'dashboard' && !this._panelBusy && !this._cameraActive) this._renderDetail();
     
     if (!this._cameraActive) {
    //   this._setBackground();
