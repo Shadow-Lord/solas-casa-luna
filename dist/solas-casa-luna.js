@@ -3008,7 +3008,7 @@ runPricing();
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
     const cells = cams.map(([label, src]) => {
-      const url = src && base ? `${base}/api/stream/${encodeURIComponent(src)}/mse` : '';
+      const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
       const body = url
         ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
         : src
