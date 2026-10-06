@@ -1,4 +1,4 @@
-// v2.1.51 stable · build no.101
+// v2.1.52 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.51';
+const VERSION = '2.1.52';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3261,8 +3261,7 @@ runPricing();
   }
 
   _renderDetail() {
-  
-  console.log('[SCL] _renderDetail, cameraActive=', this._cameraActive);
+    console.log('[SCL] _renderDetail, cameraActive=', this._cameraActive);
     if (this._cameraActive) return;   // ⭐ prevents camera reload
 
     const view = this._activeView;
@@ -4428,7 +4427,7 @@ runPricing();
   /* ══════════════ UPDATE (every hass change / 15 s tick) ══════════════ */
   /* ═══════════════════════ UPDATE — live values (every hass change / 15s) ═══════════════════════ */
   _update(tick = false) {
-  if (true) return;
+  //if (true) return;
   console.log('[SCL] _update, cameraActive=', this._cameraActive);
     if (!this._built || !this._hass) return;
     const c = this._lc || this.config;
@@ -4796,17 +4795,17 @@ runPricing();
     }
 
     /* events: derived from extra-tile entities' last_changed */
-    this._renderEvents();
+    //this._renderEvents();
 
     /* bottom tiles */
-    this._updateBottomTiles();
+    //this._updateBottomTiles();
 
     /* header status icons */
-    this._updateStatusIcons();
+    //this._updateStatusIcons();
 
     /* detail view refresh + background */
-    if (this._activeView !== 'dashboard' && !this._panelBusy && !this._cameraActive) this._renderDetail();
-    this._setBackground();
+    //if (this._activeView !== 'dashboard' && !this._panelBusy && !this._cameraActive) this._renderDetail();
+    //this._setBackground();
   }
 
   /* refresh the 6 bottom tiles: value, state colour, live room-card icon animation */
