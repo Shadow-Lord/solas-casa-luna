@@ -1,4 +1,4 @@
-// v2.1.68 stable · build no.101
+// v2.1.69 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.68';
+const VERSION = '2.1.69';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2803,9 +2803,8 @@ runPricing();
         this._closeView();
         return;
     }
-
     // ⭐ CAMERA DETECTION ⭐
-    // If the view name starts with "security-" or matches your camera view key,
+    // If the view name starts with "security" or matches your camera view key,
     // mark camera as active so _update() stops refreshing the panel.
     if (view.startsWith('security')) {
         this._cameraActive = true;
@@ -3011,7 +3010,7 @@ runPricing();
     const cells = cams.map(([label, src]) => {
       const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
       const body = url
-        ? `<iframe src="${esc(url)}" allowfullscreen style="pointer-events:none;"></iframe>`
+        ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
         : src
           ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
           : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
@@ -3141,13 +3140,10 @@ runPricing();
     const hass = this._hass; if (!hass) return;
     this._a11yPass(root);
     root.querySelectorAll('[data-cam-tap]').forEach(el => el.addEventListener('click', e => {
-      if (this._cameraActive) return;   // ⭐ block fullscreen handler during camera mode
       if (e.target.id === 'camFsClose') return;
       this._openCameraFullscreen(el.getAttribute('data-cam-tap'), el.getAttribute('data-cam-label') || 'Camera', el.getAttribute('data-cam-url') || '');
     }));
-    if (!this._cameraActive) {
-      this._refreshCameraStreams();
-    }
+    this._refreshCameraStreams();
     root.querySelectorAll('[data-more]').forEach(el => el.addEventListener('click', e => {
       if (e.target.closest('[data-toggle],[data-slider],[data-select],[data-press]')) return;
       this._fireMoreInfo(el.getAttribute('data-more'));
@@ -3286,23 +3282,6 @@ runPricing();
     const prevScroll = inner.scrollTop;
     inner.innerHTML = `<h3>${meta[1]}</h3><div class="dsub">${meta[2]}</div>${body}`;
     this._bindPanelWidgets(inner);
-    // ⭐ CAMERA TILE CLICK HANDLER ⭐
-    inner.querySelectorAll('.pw-cam').forEach(cam => {
-      cam.addEventListener('click', () => {
-        this._cameraActive = true;
-
-        const url = cam.dataset.camUrl;
-        const label = cam.dataset.camLabel || 'Camera';
-
-        // Prevent periodic refresh
-        this._panelBusy = true;
-
-        // Replace detail panel with camera iframe
-        this._q('#detailInner').innerHTML =
-          `<h3>${label}</h3><div class="dsub">Live Camera</div>
-           <iframe src="${url}" allowfullscreen style="width:100%;height:100%;border:none;"></iframe>`;
-      });
-    });
     /* generic list also needs its row binding */
     inner.querySelectorAll('.erow').forEach(r => {
       r.addEventListener('click', e => {
