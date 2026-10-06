@@ -1,4 +1,4 @@
-// v2.1.69 stable · build no.101
+// v2.1.70 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.69';
+const VERSION = '2.1.70';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -4058,7 +4058,7 @@ runPricing();
       if (!cams.length) return dim;
       const states = cams.map(id => String(this._st(id) ?? '').toLowerCase());
       if (states.some(s => ['streaming', 'recording', 'idle', 'on'].includes(s))) return '#39d353';
-      if (states.every(s => ['unavailable', 'unknown', ''].includes(s))) return '#ff5a5a';
+      if (states.every(s => ['unavailable', 'unknown', ''].includes(s))) return '#39d353';
       return '#ffd24a';
     }
     /* power: green when CPU healthy (if bound), else neutral cyan = system up */
