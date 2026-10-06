@@ -1,4 +1,4 @@
-// v2.1.61 stable · build no.101
+// v2.1.62 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.61';
+const VERSION = '2.1.62';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2805,7 +2805,7 @@ runPricing();
     }
 
     // ⭐ CAMERA DETECTION ⭐
-    // If the view name starts with "camera-" or matches your camera view key,
+    // If the view name starts with "security-" or matches your camera view key,
     // mark camera as active so _update() stops refreshing the panel.
     if (view.startsWith('security')) {
         this._cameraActive = true;
@@ -4426,7 +4426,7 @@ runPricing();
   /* ══════════════ UPDATE (every hass change / 15 s tick) ══════════════ */
   /* ═══════════════════════ UPDATE — live values (every hass change / 15s) ═══════════════════════ */
   _update(tick = false) {
-  //if (true) return;
+  if (true) return;
   console.log('[SCL] _update, cameraActive=', this._cameraActive);
     if (!this._built || !this._hass) return;
     const c = this._lc || this.config;
