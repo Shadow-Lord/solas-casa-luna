@@ -1,4 +1,4 @@
-// v2.1.56 stable · build no.101
+// v2.1.57 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.56';
+const VERSION = '2.1.57';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2807,7 +2807,7 @@ runPricing();
     // ⭐ CAMERA DETECTION ⭐
     // If the view name starts with "camera-" or matches your camera view key,
     // mark camera as active so _update() stops refreshing the panel.
-    if (view.startsWith('camera')) {
+    if (view.startsWith('security')) {
         this._cameraActive = true;
     } else {
         this._cameraActive = false;
