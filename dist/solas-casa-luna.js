@@ -1,4 +1,4 @@
-// v2.1.70 stable · build no.101
+// v2.1.71 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.70';
+const VERSION = '2.1.71';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3257,8 +3257,6 @@ runPricing();
   }
 
   _renderDetail() {
-    console.log('[SCL] _renderDetail, cameraActive =', this._cameraActive);
-
     const view = this._activeView;
     if (view === 'dashboard') return;
     const inner = this._q('#detailInner');
@@ -3281,6 +3279,20 @@ runPricing();
        snap the panel back to the top while someone's reading further down. */
     const prevScroll = inner.scrollTop;
     inner.innerHTML = `<h3>${meta[1]}</h3><div class="dsub">${meta[2]}</div>${body}`;
+
+    // ⭐ HIDE go2rtc MSE BADGE ⭐
+    inner.querySelectorAll('iframe').forEach(iframe => {
+      iframe.addEventListener('load', () => {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          const mode = doc.querySelector('.info .mode');
+          if (mode) mode.style.display = 'none';
+        } catch (e) {
+          console.warn('Cannot access iframe contents (cross-origin)');
+        }
+      });
+    });
+
     this._bindPanelWidgets(inner);
     /* generic list also needs its row binding */
     inner.querySelectorAll('.erow').forEach(r => {
@@ -3718,7 +3730,6 @@ runPricing();
     });
   }
   _openCameraFullscreen(entityId, label, go2rtcUrl) {
-  console.log('[SCL] _openCameraFullscreen', { label, cameraActive: this._cameraActive });
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center';
     ov.innerHTML = `<div style="position:relative;width:min(92vw,1280px);aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);border:1px solid rgba(120,180,255,.3)">
@@ -4405,8 +4416,6 @@ runPricing();
   /* ══════════════ UPDATE (every hass change / 15 s tick) ══════════════ */
   /* ═══════════════════════ UPDATE — live values (every hass change / 15s) ═══════════════════════ */
   _update(tick = false) {
-  //if (true) return;
-  console.log('[SCL] _update, cameraActive =', this._cameraActive);
     if (!this._built || !this._hass) return;
     const c = this._lc || this.config;
     this._applyTheme();
