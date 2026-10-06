@@ -1,4 +1,4 @@
-// v2.1.71 stable · build no.101
+// v2.1.72 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.71';
+const VERSION = '2.1.72';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3008,7 +3008,7 @@ runPricing();
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
     const cells = cams.map(([label, src]) => {
-      const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
+      const url = src && base ? `${base}/api/stream/${encodeURIComponent(src)}/mse` : '';
       const body = url
         ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
         : src
@@ -3279,20 +3279,6 @@ runPricing();
        snap the panel back to the top while someone's reading further down. */
     const prevScroll = inner.scrollTop;
     inner.innerHTML = `<h3>${meta[1]}</h3><div class="dsub">${meta[2]}</div>${body}`;
-
-    // ⭐ HIDE go2rtc MSE BADGE ⭐
-    inner.querySelectorAll('iframe').forEach(iframe => {
-      iframe.addEventListener('load', () => {
-        try {
-          const doc = iframe.contentDocument || iframe.contentWindow.document;
-          const mode = doc.querySelector('.info .mode');
-          if (mode) mode.style.display = 'none';
-        } catch (e) {
-          console.warn('Cannot access iframe contents (cross-origin)');
-        }
-      });
-    });
-
     this._bindPanelWidgets(inner);
     /* generic list also needs its row binding */
     inner.querySelectorAll('.erow').forEach(r => {
