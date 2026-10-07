@@ -1,4 +1,4 @@
-// v2.1.86 stable · build no.101
+// v2.1.87 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.86';
+const VERSION = '2.1.87';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3793,6 +3793,10 @@ runPricing();
     ov.innerHTML = `
       <div id="camFsContainer" style="position:relative;width:100vw;height:100vh;background:#000;overflow:hidden;">
         <div id="camFsBody" style="width:100%;height:100%;"></div>
+
+        <!-- Transparent click catcher -->
+        <div id="camFsClick" style="position:absolute;top:0;left:0;right:0;bottom:0;cursor:pointer;"></div>
+
         <div style="position:absolute;top:10px;left:14px;font-size:18px;font-weight:700;color:#eaf4ff;text-shadow:0 1px 4px #000;">
           ${esc(label)}
         </div>
@@ -3809,16 +3813,17 @@ runPricing();
       ov.remove();
     };
 
+    // Close when clicking overlay or ✕
     ov.addEventListener('click', e => {
       if (e.target.id === 'camFsClose' || e.target === ov) {
         close();
       }
     });
 
-    ov.querySelector('#camFsContainer').addEventListener('click', e => {
-      if (e.target.id !== 'camFsBody') close();
-    });
+    // Close when clicking the transparent overlay
+    ov.querySelector('#camFsClick').addEventListener('click', () => close());
 
+    // Close on ESC
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement) {
         ov.remove();
