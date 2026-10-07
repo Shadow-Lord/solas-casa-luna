@@ -1,4 +1,4 @@
-// v2.1.84 stable · build no.101
+// v2.1.85 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.84';
+const VERSION = '2.1.85';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3020,25 +3020,32 @@ runPricing();
     const base = this.config.camera_stream_base || '';
 
     const cells = cams.map(([label, src]) => {
-      // Skip invalid or empty camera entries
       if (!src || src.trim() === '') return '';
 
-      // Build go2rtc URL if base is set
       const url = base
         ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse`
         : '';
 
-      // Prevent iframe/img from swallowing click (critical for fullscreen)
+      // iframe/img wrapped with a click‑catcher overlay
       const body = url
-        ? `<iframe src="${esc(url)}"
-                   allowfullscreen
-                   onclick="event.stopPropagation(); event.preventDefault();"></iframe>`
-        : `<img class="camStream"
-                data-cam-id="${esc(src)}"
-                alt="${esc(label || '')}"
-                onclick="event.stopPropagation(); event.preventDefault();">`;
+        ? `
+          <div style="position:relative;width:100%;height:100%;">
+            <iframe src="${esc(url)}"
+                    allowfullscreen
+                    style="width:100%;height:100%;border:0;"></iframe>
+            <div style="position:absolute;top:0;left:0;right:0;bottom:0;cursor:pointer;"></div>
+          </div>
+        `
+        : `
+          <div style="position:relative;width:100%;height:100%;">
+            <img class="camStream"
+                 data-cam-id="${esc(src)}"
+                 alt="${esc(label || '')}"
+                 style="width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;top:0;left:0;right:0;bottom:0;cursor:pointer;"></div>
+          </div>
+        `;
 
-      // Build camera tile with fullscreen attributes
       return `
         <div class="pw-cam"
              data-cam-tap="${esc(src)}"
