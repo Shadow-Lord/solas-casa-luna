@@ -1,4 +1,4 @@
-// v2.1.75 stable · build no.101
+// v2.1.76 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.75';
+const VERSION = '2.1.76';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -4051,37 +4051,26 @@ runPricing();
       return dim;
     }
     if (role === 'cam') {
-      // Auto-detect all sec_cam* entries in config (sec_cam1..sec_cam16..etc)
-      const cams = Object.keys(this.config)
-        .filter(k => k.startsWith('sec_cam'))
-        .map(k => this.config[k])
-        .filter(Boolean);
+      const cams = [c.sec_cam1, c.sec_cam2].filter(Boolean);
 
-      // If ANY sec_cam* is configured → camera system is active → green
-      if (cams.length > 0) {
-        const states = cams.map(id => String(this._st(id) ?? '').toLowerCase());
-
-        // 1️ If HA reports real camera states → green
-        if (states.some(s => ['streaming', 'recording', 'idle', 'on'].includes(s))) {
-          return '#39d353';   // green
-        }
-
-        // 2️ If HA reports ALL cameras unavailable/unknown/empty → RED (your rule)
-        if (states.every(s => ['unavailable', 'unknown', ''].includes(s))) {
-          return '#ff5a5a';   // red
-        }
-
-        // 3️ If HA returns empty/null for all cameras → green (go2rtc-only setup)
-        if (states.every(s => s === '')) {
-          return '#39d353';   // green
-        }
-
-        // 4️ Mixed or unexpected states → yellow
-        return '#ffd24a';
+      // 1️ If ANY camera ID starts with "sec_cam" → system active → green
+      if (cams.some(id => String(id).startsWith('sec_cam'))) {
+        return '#39d353';   // green
       }
 
-      // No cameras configured → dim
-      return dim;
+      // 2️ If HA reports real camera states → green
+      const states = cams.map(id => String(this._st(id) ?? '').toLowerCase());
+      if (states.some(s => ['streaming', 'recording', 'idle', 'on'].includes(s))) {
+        return '#39d353';
+      }
+
+      // 3 If HA reports all unavailable/unknown/empty → red
+      if (states.every(s => ['unavailable', 'unknown', ''].includes(s))) {
+        return '#ff5a5a';
+      }
+
+      // 4 Mixed or unexpected → yellow
+      return '#ffd24a';
     }
     /* power: green when CPU healthy (if bound), else neutral cyan = system up */
     if (role === 'power') {
