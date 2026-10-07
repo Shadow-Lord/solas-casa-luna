@@ -1,4 +1,4 @@
-// v2.1.85 stable · build no.101
+// v2.1.86 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.85';
+const VERSION = '2.1.86';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3785,25 +3785,64 @@ runPricing();
       });
     });
   }
+
   _openCameraFullscreen(entityId, label, go2rtcUrl) {
     const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center';
-    ov.innerHTML = `<div style="position:relative;width:min(92vw,1280px);aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);border:1px solid rgba(120,180,255,.3)">
-      <div id="camFsBody" style="width:100%;height:100%"></div>
-      <div style="position:absolute;top:10px;left:14px;font-size:14px;font-weight:700;color:#eaf4ff;text-shadow:0 1px 4px #000">${esc(label)}</div>
-      <div id="camFsClose" style="position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.5);color:#eaf4ff;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer">✕</div>
-    </div>`;
-    const close = this._hostOverlay(ov);
-    ov.addEventListener('click', e => { if (e.target === ov || e.target.id === 'camFsClose') close(); });
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;';
+
+    ov.innerHTML = `
+      <div id="camFsContainer" style="position:relative;width:100vw;height:100vh;background:#000;overflow:hidden;">
+        <div id="camFsBody" style="width:100%;height:100%;"></div>
+        <div style="position:absolute;top:10px;left:14px;font-size:18px;font-weight:700;color:#eaf4ff;text-shadow:0 1px 4px #000;">
+          ${esc(label)}
+        </div>
+        <div id="camFsClose" style="position:absolute;top:8px;right:8px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);color:#eaf4ff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;">
+          ✕
+        </div>
+      </div>
+    `;
+
+    const close = () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+      ov.remove();
+    };
+
+    ov.addEventListener('click', e => {
+      if (e.target.id === 'camFsClose' || e.target === ov) {
+        close();
+      }
+    });
+
+    ov.querySelector('#camFsContainer').addEventListener('click', e => {
+      if (e.target.id !== 'camFsBody') close();
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        ov.remove();
+      }
+    });
+
     const body = ov.querySelector('#camFsBody');
+
     if (go2rtcUrl) {
-      body.innerHTML = `<iframe src="${esc(go2rtcUrl)}" allowfullscreen style="width:100%;height:100%;border:none"></iframe>`;
+      body.innerHTML = `
+        <iframe src="${esc(go2rtcUrl)}"
+                allowfullscreen
+                style="width:100%;height:100%;border:none;">
+        </iframe>`;
     } else {
       const img = document.createElement('img');
-      img.style.cssText = 'width:100%;height:100%;object-fit:contain;background:#000';
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;background:#000;';
       body.appendChild(img);
       this._resolveCameraStream(entityId, true).then(url => { if (url) img.src = url; });
     }
+
+    document.body.appendChild(ov);
+
+    ov.requestFullscreen?.();
   }
 
   _fireMoreInfo(entityId) {
