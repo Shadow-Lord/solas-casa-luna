@@ -1,4 +1,4 @@
-// v2.1.79 stable · build no.101
+// v2.1.80 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.79';
+const VERSION = '2.1.80';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3015,20 +3015,37 @@ runPricing();
     return `<div class="pw-scenes">${cells}</div>`;
   }
 
-  /* dual camera tiles (go2rtc/WebRTC iframe streams) */
+  /* Multi camera tiles (go2rtc/WebRTC iframe streams) */
   _wCameras(cams) {
     const base = this.config.camera_stream_base || '';
+
     const cells = cams.map(([label, src]) => {
-      const url = src && base ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse` : '';
+      // Skip invalid or empty camera entries
+      if (!src || src.trim() === '') return '';
+
+      // Build go2rtc URL if base is set
+      const url = base
+        ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse`
+        : '';
+
+      // Choose iframe (WebRTC) or HA proxy <img>
       const body = url
         ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
-        : src
-          ? `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label)}">`
-          : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#5a7a9a;font-size:12px">📷 ${esc(label)}<br>(stream not set)</div>`;
-      return `<div class="pw-cam" ${src ? `data-cam-tap="${esc(src)}" data-cam-label="${esc(label)}" data-cam-url="${esc(url)}"` : ''}>
-        ${body}
-        <div class="clbl">${esc(label)}</div><div class="crec">LIVE</div></div>`;
+        : `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label || '')}">`;
+
+      // Build camera tile with fullscreen attributes
+      return `
+        <div class="pw-cam"
+             data-cam-tap="${esc(src)}"
+             data-cam-label="${esc(label || '')}"
+             data-cam-url="${esc(url)}">
+          ${body}
+          <div class="clbl">${esc(label || '')}</div>
+          <div class="crec">LIVE</div>
+        </div>
+      `;
     }).join('');
+
     return `<div class="pw-cams">${cells}</div>`;
   }
 
@@ -3393,69 +3410,76 @@ runPricing();
     }).join('');
   }
 
-/* ── SECURITY view: cameras + safety sensors + alarm controls ── */
-_viewSecurity() {
-  const c = this.config;
+  /* ── SECURITY view: cameras + safety sensors + alarm controls ── */
+  _viewSecurity() {
+    const c = this.config;
 
-  // Auto-discover all sec_cam* cameras
-  const camList = Object.keys(c)
-    .filter(k => k.startsWith('sec_cam'))
-    .map(k => {
-      const label = c[`${k}_name`] || this._name(c[k]) || k.replace('sec_cam', 'Camera ');
-      return [label, c[k]];
-    })
-    .filter(entry => entry[1]);
+    // Auto-discover all sec_cam* cameras
+    const camList = Object.keys(c)
+      .filter(k => k.startsWith('sec_cam'))
+      .map(k => {
+        const id = c[k] && c[k].trim() !== '' ? c[k] : k;
+        const rawName = c[`${k}_name`];
+        const label = rawName && rawName.trim() !== '' ? rawName.trim() : '';
+        return [label, id];
+      })
+      .filter(([label, id]) => id && id.trim() !== '');
 
-  if (this._autoOn('security')) {
-    return this._wHead('Cameras')
-      + this._wCameras(camList)
-      + this._wHead('Safety Sensors (auto)')
-      + this._discoverTiles([{ domain: 'binary_sensor', device_class: ['gas', 'smoke', 'carbon_monoxide', 'safety'] }], 4, () => '🔥')
-      + this._wHead('Motion & Doors (auto)')
-      + this._discoverTiles(
-          [{ domain: 'binary_sensor', device_class: ['motion', 'occupancy', 'moving'] },
-           { domain: 'binary_sensor', device_class: ['door', 'window', 'opening', 'garage_door'] }],
-          4,
-          id => {
-            const dc = this._attr(id, 'device_class');
-            return ['door', 'window', 'opening', 'garage_door'].includes(dc) ? '🚪' : '🚶';
-          }
-        );
+    if (this._autoOn('security')) {
+      return this._wHead('Cameras')
+        + this._wCameras(camList)
+        + this._wHead('Safety Sensors (auto)')
+        + this._discoverTiles(
+            [{ domain: 'binary_sensor', device_class: ['gas', 'smoke', 'carbon_monoxide', 'safety'] }],
+            4,
+            () => '🔥'
+          )
+        + this._wHead('Motion & Doors (auto)')
+        + this._discoverTiles(
+            [
+              { domain: 'binary_sensor', device_class: ['motion', 'occupancy', 'moving'] },
+              { domain: 'binary_sensor', device_class: ['door', 'window', 'opening', 'garage_door'] }
+            ],
+            4,
+            id => {
+              const dc = this._attr(id, 'device_class');
+              return ['door', 'window', 'opening', 'garage_door'].includes(dc) ? '🚪' : '🚶';
+            }
+          );
+    }
+
+    const grp = (head, body) => body ? this._wHead(head) + body : '';
+
+    const safety = [
+      c.sec_flame      && this._wTile('🔥', c.sec_flame_name      || this._name(c.sec_flame), c.sec_flame),
+      c.sec_gas_analog && this._wTile('💨', c.sec_gas_analog_name || this._name(c.sec_gas_analog), c.sec_gas_analog),
+      c.sec_gas_digital&& this._wTile('🔔', c.sec_gas_digital_name|| this._name(c.sec_gas_digital), c.sec_gas_digital),
+      c.sec_motion     && this._wTile('🚶', c.sec_motion_name     || this._name(c.sec_motion), c.sec_motion),
+    ].filter(Boolean).join('');
+
+    const doors = [
+      c.sec_door1   && this._wTile('🚪', c.sec_door1_name   || this._name(c.sec_door1), c.sec_door1),
+      c.sec_window1 && this._wTile('🪟', c.sec_window1_name || this._name(c.sec_window1), c.sec_window1),
+    ].filter(Boolean).join('');
+
+    const extra = [1, 2, 3, 4, 5, 6].map(n => {
+      const id = c[`sec_extra_${n}_entity`];
+      return id ? this._wTile('🛡️', c[`sec_extra_${n}_name`] || this._name(id), id) : '';
+    }).filter(Boolean).join('');
+
+    const scenes = [
+      ['🛡️', 'Arm Away', c.sec_scene_arm || ''],
+      ['🏠', 'Disarm', c.sec_scene_disarm || ''],
+      ['🌙', 'Night', c.sec_scene_night || ''],
+    ].filter(s => s[2]);
+
+    return this._wCameras(camList)
+      + grp('Safety Sensors', safety ? this._wGrid(4, safety) : '')
+      + grp('Doors & Windows', doors ? this._wGrid(2, doors) : '')
+      + grp('More', extra ? this._wGrid(4, extra) : '')
+      + grp('Alarm & Scenes', scenes.length ? this._wScenes(scenes) : '')
+      + (c.sec_motion_alert ? this._wToggle('📢', 'Motion alert when away', c.sec_motion_alert) : '');
   }
-
-  const grp = (head, body) => body ? this._wHead(head) + body : '';
-
-  const safety = [
-    c.sec_flame      && this._wTile('🔥', c.sec_flame_name      || this._name(c.sec_flame), c.sec_flame),
-    c.sec_gas_analog && this._wTile('💨', c.sec_gas_analog_name || this._name(c.sec_gas_analog), c.sec_gas_analog),
-    c.sec_gas_digital&& this._wTile('🔔', c.sec_gas_digital_name|| this._name(c.sec_gas_digital), c.sec_gas_digital),
-    c.sec_motion     && this._wTile('🚶', c.sec_motion_name     || this._name(c.sec_motion), c.sec_motion),
-  ].filter(Boolean).join('');
-
-  const doors = [
-    c.sec_door1   && this._wTile('🚪', c.sec_door1_name   || this._name(c.sec_door1), c.sec_door1),
-    c.sec_window1 && this._wTile('🪟', c.sec_window1_name || this._name(c.sec_window1), c.sec_window1),
-  ].filter(Boolean).join('');
-
-  const extra = [1, 2, 3, 4, 5, 6].map(n => {
-    const id = c[`sec_extra_${n}_entity`];
-    return id ? this._wTile('🛡️', c[`sec_extra_${n}_name`] || this._name(id), id) : '';
-  }).filter(Boolean).join('');
-
-  const scenes = [
-    ['🛡️', 'Arm Away', c.sec_scene_arm || ''],
-    ['🏠', 'Disarm', c.sec_scene_disarm || ''],
-    ['🌙', 'Night', c.sec_scene_night || ''],
-  ].filter(s => s[2]);
-
-  return this._wCameras(camList)
-    + grp('Safety Sensors', safety ? this._wGrid(4, safety) : '')
-    + grp('Doors & Windows', doors ? this._wGrid(2, doors) : '')
-    + grp('More', extra ? this._wGrid(4, extra) : '')
-    + grp('Alarm & Scenes', scenes.length ? this._wScenes(scenes) : '')
-    + (c.sec_motion_alert ? this._wToggle('📢', 'Motion alert when away', c.sec_motion_alert) : '');
-}
-
 
   /* ── CLIMATE view: AC + fridge + ambient sensors ── */
   _viewClimate() {
