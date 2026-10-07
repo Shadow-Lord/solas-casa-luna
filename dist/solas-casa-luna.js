@@ -1,4 +1,4 @@
-// v2.1.77 stable · build no.101
+// v2.1.78 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.77';
+const VERSION = '2.1.78';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -2874,6 +2874,17 @@ runPricing();
       <div class="mv${bad ? ' off' : ''}" ${has ? `data-val="${esc(entId)}" data-unit="${esc(unit)}"` : ''}>${esc(val)}</div></div>`;
   }
 
+  // Grid 4x3 for cameras
+  _wCameraGrid(camList) {
+    // Convert camList → HTML tiles
+    const tiles = camList.map(([label, id]) => {
+      return this._wCamera(label, id);   // your existing camera renderer
+    }).join('');
+
+    // 4 columns → 4×3 grid for 12 cameras
+    return this._wGrid(4, tiles);
+  }
+
   // format seconds or ISO timestamp into "Xd Yh Zm" or return '--'
   _formatUptimeFromState(state) {
     if (state == null || state === '' || /^(unavailable|unknown)$/i.test(state)) return '--';
@@ -3383,34 +3394,39 @@ runPricing();
   }
 
   /* ── SECURITY view: cameras + safety sensors + alarm controls ── */
-_viewSecurity() {
-  const c = this.config;
+  _viewSecurity() {
+    const c = this.config;
+    // Auto-discover all sec_cam* cameras
+    const camList = Object.keys(c)
+      .filter(k => k.startsWith('sec_cam'))
+      .map(k => {
+        const label = c[`${k}_name`] || this._name(c[k]) || k.replace('sec_cam', 'Camera ');
+        return [label, c[k]];
+      })
+      .filter(entry => entry[1]);
 
-  // Auto-discover all sec_cam* cameras
-  const camList = Object.keys(c)
-    .filter(k => k.startsWith('sec_cam'))
-    .map(k => {
-      const label = c[`${k}_name`] || this._name(c[k]) || k.replace('sec_cam', 'Camera ');
-      return [label, c[k]];
-    })
-    .filter(entry => entry[1]);
+    // Camera grid renderer (4 columns → 4×3 for 12 cameras)
+    const _wCameraGrid = (list) => {
+      const tiles = list.map(([label, id]) => this._wCamera(label, id)).join('');
+      return this._wGrid(4, tiles);
+    };
 
-  if (this._autoOn('security')) {
-    return this._wHead('Cameras')
-      + this._wCameras(camList)
-      + this._wHead('Safety Sensors (auto)')
-      + this._discoverTiles([{ domain: 'binary_sensor', device_class: ['gas', 'smoke', 'carbon_monoxide', 'safety'] }], 4, () => '🔥')
-      + this._wHead('Motion & Doors (auto)')
-      + this._discoverTiles(
-          [{ domain: 'binary_sensor', device_class: ['motion', 'occupancy', 'moving'] },
-           { domain: 'binary_sensor', device_class: ['door', 'window', 'opening', 'garage_door'] }],
-          4,
-          id => {
-            const dc = this._attr(id, 'device_class');
-            return ['door', 'window', 'opening', 'garage_door'].includes(dc) ? '🚪' : '🚶';
-          }
-        );
-  }
+    if (this._autoOn('security')) {
+      return this._wHead('Cameras')
+        + _wCameraGrid(camList)
+        + this._wHead('Safety Sensors (auto)')
+        + this._discoverTiles([{ domain: 'binary_sensor', device_class: ['gas', 'smoke', 'carbon_monoxide', 'safety'] }], 4, () => '🔥')
+        + this._wHead('Motion & Doors (auto)')
+        + this._discoverTiles(
+            [{ domain: 'binary_sensor', device_class: ['motion', 'occupancy', 'moving'] },
+             { domain: 'binary_sensor', device_class: ['door', 'window', 'opening', 'garage_door'] }],
+            4,
+            id => {
+              const dc = this._attr(id, 'device_class');
+              return ['door', 'window', 'opening', 'garage_door'].includes(dc) ? '🚪' : '🚶';
+            }
+          );
+    }
     const grp = (head, body) => body ? this._wHead(head) + body : '';
     const safety = [
       c.sec_flame      && this._wTile('🔥', c.sec_flame_name      || this._name(c.sec_flame), c.sec_flame),
@@ -3431,10 +3447,7 @@ _viewSecurity() {
       ['🏠', 'Disarm', c.sec_scene_disarm || ''],
       ['🌙', 'Night', c.sec_scene_night || ''],
     ].filter(s => s[2]);
-    return this._wCameras([
-      ['Front — Cam 1', c.sec_cam1 || ''],
-      ['Gate — Cam 2', c.sec_cam2 || ''],
-    ])
+    return _wCameraGrid(camList)
       + grp('Safety Sensors', safety ? this._wGrid(4, safety) : '')
       + grp('Doors & Windows', doors ? this._wGrid(2, doors) : '')
       + grp('More', extra ? this._wGrid(4, extra) : '')
@@ -6159,10 +6172,17 @@ class CasaLunaEditor extends HTMLElement {
 
     /* ── Per-view entity configuration (every field from the 9 nav panels) ── */
     shell.appendChild(section('nav_cameras', '📷', 'Cameras', [
-      info('Pick a camera entity and it just works — streams live via Home Assistant\'s own camera proxy, no extra setup. Leave "Stream base URL" empty unless you run go2rtc.'),
+      info('Pick camera entities. Add as many as you want — the dashboard auto-detects sec_cam* entries and builds a grid automatically.'),
       textField('camera_stream_base', 'go2rtc base URL (optional — for lower-latency WebRTC)', 'http://192.168.3.109:1984'),
-      picker('sec_cam1', 'Camera 1 (Front)', true),
-      picker('sec_cam2', 'Camera 2 (Gate)', true),
+
+      // Auto-generate camera pickers + name fields for sec_cam1..sec_cam16
+      ...Array.from({ length: 16 }, (_, i) => {
+        const n = i + 1;
+        return [
+          picker(`sec_cam${n}`, `Camera ${n}`, true),
+          textField(`sec_cam${n}_name`, `Camera ${n} name`, ''),
+        ];
+      }).flat(),
     ]));
 
     shell.appendChild(section('nav_energy', '⚡', 'Energy View', [
