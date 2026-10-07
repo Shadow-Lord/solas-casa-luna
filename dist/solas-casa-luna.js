@@ -1,4 +1,4 @@
-// v2.1.76 stable · build no.101
+// v2.1.77 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.76';
+const VERSION = '2.1.77';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3383,18 +3383,34 @@ runPricing();
   }
 
   /* ── SECURITY view: cameras + safety sensors + alarm controls ── */
-  _viewSecurity() {
-    const c = this.config;
-    /* auto-discover: all cameras + safety binary_sensors */
-    if (this._autoOn('security')) {
-      return this._wHead('Cameras')
-        + this._wCameras([['Front — Cam 1', c.sec_cam1 || ''], ['Gate — Cam 2', c.sec_cam2 || '']])
-        + this._wHead('Safety Sensors (auto)')
-        + this._discoverTiles([{ domain: 'binary_sensor', device_class: ['gas', 'smoke', 'carbon_monoxide', 'safety'] }], 4, () => '🔥')
-        + this._wHead('Motion & Doors (auto)')
-        + this._discoverTiles([{ domain: 'binary_sensor', device_class: ['motion', 'occupancy', 'moving'] }, { domain: 'binary_sensor', device_class: ['door', 'window', 'opening', 'garage_door'] }], 4,
-          id => { const dc = this._attr(id, 'device_class'); return ['door', 'window', 'opening', 'garage_door'].includes(dc) ? '🚪' : '🚶'; });
-    }
+_viewSecurity() {
+  const c = this.config;
+
+  // Auto-discover all sec_cam* cameras
+  const camList = Object.keys(c)
+    .filter(k => k.startsWith('sec_cam'))
+    .map(k => {
+      const label = c[`${k}_name`] || this._name(c[k]) || k.replace('sec_cam', 'Camera ');
+      return [label, c[k]];
+    })
+    .filter(entry => entry[1]);
+
+  if (this._autoOn('security')) {
+    return this._wHead('Cameras')
+      + this._wCameras(camList)
+      + this._wHead('Safety Sensors (auto)')
+      + this._discoverTiles([{ domain: 'binary_sensor', device_class: ['gas', 'smoke', 'carbon_monoxide', 'safety'] }], 4, () => '🔥')
+      + this._wHead('Motion & Doors (auto)')
+      + this._discoverTiles(
+          [{ domain: 'binary_sensor', device_class: ['motion', 'occupancy', 'moving'] },
+           { domain: 'binary_sensor', device_class: ['door', 'window', 'opening', 'garage_door'] }],
+          4,
+          id => {
+            const dc = this._attr(id, 'device_class');
+            return ['door', 'window', 'opening', 'garage_door'].includes(dc) ? '🚪' : '🚶';
+          }
+        );
+  }
     const grp = (head, body) => body ? this._wHead(head) + body : '';
     const safety = [
       c.sec_flame      && this._wTile('🔥', c.sec_flame_name      || this._name(c.sec_flame), c.sec_flame),
