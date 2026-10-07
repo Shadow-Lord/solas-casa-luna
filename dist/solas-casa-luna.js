@@ -1,4 +1,4 @@
-// v2.1.80 stable · build no.101
+// v2.1.81 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.80';
+const VERSION = '2.1.81';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3414,16 +3414,19 @@ runPricing();
   _viewSecurity() {
     const c = this.config;
 
-    // Auto-discover all sec_cam* cameras
-    const camList = Object.keys(c)
-      .filter(k => k.startsWith('sec_cam'))
-      .map(k => {
-        const id = c[k] && c[k].trim() !== '' ? c[k] : k;
-        const rawName = c[`${k}_name`];
-        const label = rawName && rawName.trim() !== '' ? rawName.trim() : '';
-        return [label, id];
-      })
-      .filter(([label, id]) => id && id.trim() !== '');
+// Auto-discover all sec_cam* cameras
+const camList = Object.keys(c)
+  .filter(k => k.startsWith('sec_cam'))
+  .map(k => {
+    const id = c[k] && c[k].trim() !== '' ? c[k].trim() : null;
+    if (!id) return null;
+
+    const rawName = c[`${k}_name`];
+    const label = rawName && rawName.trim() !== '' ? rawName.trim() : '';
+
+    return [label, id];
+  })
+  .filter(Boolean);
 
     if (this._autoOn('security')) {
       return this._wHead('Cameras')
