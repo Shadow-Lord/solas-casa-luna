@@ -1,4 +1,4 @@
-// v2.1.88 stable · build no.101
+// v2.1.89 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.88';
+const VERSION = '2.1.89';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3047,18 +3047,21 @@ runPricing();
         `;
 
       return `
-        <div style="font-size:14px;font-weight:600;color:#fff;margin:4px 0 6px 2px;">
-          ${esc(label || '')}
-        </div>
+        <div style="display:block;width:100%;margin-bottom:12px;">
+          <div style="font-size:14px;font-weight:600;color:#fff;margin:0 0 6px 2px;">
+            ${esc(label || '')}
+          </div>
 
-        <div class="pw-cam"
-             data-cam-tap="${esc(src)}"
-             data-cam-label="${esc(label || '')}"
-             data-cam-url="${esc(url)}"
-             role="button"
-             tabindex="0">
-          ${body}
-          <div class="crec">LIVE</div>
+          <div class="pw-cam"
+               data-cam-tap="${esc(src)}"
+               data-cam-label="${esc(label || '')}"
+               data-cam-url="${esc(url)}"
+               role="button"
+               tabindex="0"
+               style="position:relative;">
+            ${body}
+            <div class="crec">LIVE</div>
+          </div>
         </div>
       `;
     }).join('');
