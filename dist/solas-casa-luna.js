@@ -1,4 +1,4 @@
-// v2.1.83 stable · build no.101
+// v2.1.84 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.83';
+const VERSION = '2.1.84';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3028,10 +3028,15 @@ runPricing();
         ? `${base}/stream.html?src=${encodeURIComponent(src)}&mode=mse`
         : '';
 
-      // Choose iframe (WebRTC) or HA proxy <img>
+      // Prevent iframe/img from swallowing click (critical for fullscreen)
       const body = url
-        ? `<iframe src="${esc(url)}" allowfullscreen></iframe>`
-        : `<img class="camStream" data-cam-id="${esc(src)}" alt="${esc(label || '')}">`;
+        ? `<iframe src="${esc(url)}"
+                   allowfullscreen
+                   onclick="event.stopPropagation(); event.preventDefault();"></iframe>`
+        : `<img class="camStream"
+                data-cam-id="${esc(src)}"
+                alt="${esc(label || '')}"
+                onclick="event.stopPropagation(); event.preventDefault();">`;
 
       // Build camera tile with fullscreen attributes
       return `
@@ -3414,19 +3419,19 @@ runPricing();
   _viewSecurity() {
     const c = this.config;
 
-// Auto-discover only camera picker keys (not *_name keys)
-const camList = Object.keys(c)
-  .filter(k => k.startsWith('sec_cam') && !k.endsWith('_name'))
-  .map(k => {
-    const id = c[k];
-    if (!id || id.trim() === '') return null;  // skip empty pickers
+    // Auto-discover only camera picker keys (not *_name keys)
+    const camList = Object.keys(c)
+      .filter(k => k.startsWith('sec_cam') && !k.endsWith('_name'))
+      .map(k => {
+        const id = c[k];
+        if (!id || id.trim() === '') return null;  // skip empty pickers
 
-    const rawName = c[`${k}_name`];
-    const label = rawName && rawName.trim() !== '' ? rawName.trim() : '';
+        const rawName = c[`${k}_name`];
+        const label = rawName && rawName.trim() !== '' ? rawName.trim() : '';
 
-    return [label, id.trim()];
-  })
-  .filter(Boolean);
+        return [label, id.trim()];
+      })
+      .filter(Boolean);
 
     if (this._autoOn('security')) {
       return this._wHead('Cameras')
