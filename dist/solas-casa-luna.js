@@ -1,4 +1,4 @@
-// v2.1.90 stable · build no.101
+// v2.1.91 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.90';
+const VERSION = '2.1.91';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1067,6 +1067,64 @@ class CasaLuna extends HTMLElement {
     const color = this._invStateColor(code);
     return { raw: rawState, code, label, color };
   }
+
+// speak alert in female voice
+_speakAlert(text) {
+  try {
+    const utter = new SpeechSynthesisUtterance(text);
+
+    const voices = speechSynthesis.getVoices();
+    const female = voices.find(v =>
+      /female|woman|zira|susan|salli|amy|emma|joanna/i.test(v.name)
+    );
+
+    if (female) utter.voice = female;
+
+    utter.pitch = 1;
+    utter.rate = 1;
+    speechSynthesis.speak(utter);
+  } catch (e) {
+    console.warn("TTS failed:", e);
+  }
+}
+
+async _refreshStates() {
+  this._allStates = await this.hass.callWS({ type: "get_states" });
+}
+
+_getStateCached(entityId) {
+  return this._allStates?.find(e => e.entity_id === entityId)?.state || "off";
+}
+
+_lastEventStates = {};
+
+async _checkHikvisionEvents() {
+  const events = {
+    line: await this._getState("binary_sensor.front_gate_line_crossing"),
+    field: await this._getState("binary_sensor.front_gate_field_detection"),
+    motion: await this._getState("binary_sensor.front_gate_motion")
+  };
+
+  for (const [key, state] of Object.entries(events)) {
+    if (state === "on" && this._lastEventStates[key] !== "on") {
+
+      if (key === "line") {
+        this._speakAlert("Line crossing detected at the Front Gate.");
+        this._openCameraFullscreen("camera.front_gate", "Front Gate", sec_cam1);
+      }
+
+      if (key === "field") {
+        this._speakAlert("Field detection event at the Front Gate.");
+      }
+
+      if (key === "motion") {
+        this._speakAlert("Motion detected at the Front Gate.");
+      }
+    }
+
+    this._lastEventStates[key] = state;
+  }
+}
 
 // format an ISO/timestamp to localized HH:MM:SS
 _formatTimeForUI(dt) {
@@ -4918,6 +4976,9 @@ runPricing();
     if (!this._cameraActive) {
       this._setBackground();
     }
+    
+    await this._refreshStates();
+    await this._checkHikvisionEvents();
   }
 
   /* refresh the 6 bottom tiles: value, state colour, live room-card icon animation */
