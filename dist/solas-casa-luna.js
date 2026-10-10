@@ -1,4 +1,4 @@
-// v2.1.91 stable · build no.101
+// v2.1.92 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.91';
+const VERSION = '2.1.92';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -864,6 +864,7 @@ class CasaLuna extends HTMLElement {
     this._prevPvWaveBy = -1;
     this._prevMoonPhase = -1;
     this._cameraActive = false;
+    this._lastEventStates = {};
   }
 
   setConfig(config) {
@@ -1096,13 +1097,11 @@ _getStateCached(entityId) {
   return this._allStates?.find(e => e.entity_id === entityId)?.state || "off";
 }
 
-_lastEventStates = {};
-
 async _checkHikvisionEvents() {
   const events = {
-    line: await this._getState("binary_sensor.front_gate_line_crossing"),
-    field: await this._getState("binary_sensor.front_gate_field_detection"),
-    motion: await this._getState("binary_sensor.front_gate_motion")
+    line: this._getStateCached("binary_sensor.front_gate_line_crossing"),
+    field: this._getStateCached("binary_sensor.front_gate_field_detection"),
+    motion: this._getStateCached("binary_sensor.front_gate_motion")
   };
 
   for (const [key, state] of Object.entries(events)) {
@@ -1110,7 +1109,7 @@ async _checkHikvisionEvents() {
 
       if (key === "line") {
         this._speakAlert("Line crossing detected at the Front Gate.");
-        this._openCameraFullscreen("camera.front_gate", "Front Gate", sec_cam1);
+        this._openCameraFullscreen("camera.front_gate", "Front Gate", "sec_cam1");
       }
 
       if (key === "field") {
@@ -4976,7 +4975,7 @@ runPricing();
     if (!this._cameraActive) {
       this._setBackground();
     }
-    
+
     await this._refreshStates();
     await this._checkHikvisionEvents();
   }
