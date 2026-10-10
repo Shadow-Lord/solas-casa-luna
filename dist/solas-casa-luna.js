@@ -1,4 +1,4 @@
-// v2.1.93 stable · build no.101
+// v2.1.94 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.93';
+const VERSION = '2.1.94';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1090,7 +1090,8 @@ _speakAlert(text) {
 }
 
 async _refreshStates() {
-  this._allStates = await this.hass.callWS({ type: "get_states" });
+  if (!this._hass) return;
+  this._allStates = await this._hass.callWS({ type: "get_states" });
 }
 
 _getStateCached(entityId) {
