@@ -1,4 +1,4 @@
-// v2.1.96 stable · build no.101
+// v2.1.97 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.96';
+const VERSION = '2.1.97';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3922,6 +3922,7 @@ runPricing();
     ov.requestFullscreen?.();
   }
 
+  //Opens Camera Window for when Hikvision is Triggered
   _openCameraWindow(entityId, label, go2rtcUrl) {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;';
@@ -3942,11 +3943,8 @@ runPricing();
 
     const close = () => ov.remove();
 
-    ov.addEventListener('click', e => {
-      if (e.target.id === 'camWinClose' || e.target === ov) {
-        close();
-      }
-    });
+    // ⭐ NEW: clicking ANYWHERE closes the window
+    ov.addEventListener('click', () => close());
 
     const body = ov.querySelector('#camWinBody');
 
