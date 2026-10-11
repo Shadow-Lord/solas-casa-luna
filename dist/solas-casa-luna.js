@@ -1,4 +1,4 @@
-// v2.1.95 stable · build no.101
+// v2.1.96 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.95';
+const VERSION = '2.1.96';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1111,11 +1111,12 @@ async _checkHikvisionEvents() {
       if (key === "line") {
         this._speakAlert("Line crossing detected at the Front Gate.");
 
-        // ⭐ Open ONLY sec_cam1 in the normal camera window (no grid, no fullscreen)
-        this._detailEntity = "sec_cam1";
-        this._cameraActive = true;
-        this._activeView = "camera";
-        this._renderDetail();
+        // ⭐ Open ONLY sec_cam1 in a normal window (no fullscreen)
+        this._openCameraWindow(
+          null,
+          "Front Gate",
+          this.config.camera_stream_base + "/stream.html?src=sec_cam1&mode=mse"
+        );
       }
 
       if (key === "field") {
@@ -3919,6 +3920,50 @@ runPricing();
     document.body.appendChild(ov);
 
     ov.requestFullscreen?.();
+  }
+
+  _openCameraWindow(entityId, label, go2rtcUrl) {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;';
+
+    ov.innerHTML = `
+      <div id="camWinContainer" style="position:relative;width:100vw;height:100vh;background:#000;overflow:hidden;">
+        <div id="camWinBody" style="width:100%;height:100%;"></div>
+
+        <div style="position:absolute;top:10px;left:14px;font-size:18px;font-weight:700;color:#eaf4ff;text-shadow:0 1px 4px #000;">
+          ${esc(label)}
+        </div>
+
+        <div id="camWinClose" style="position:absolute;top:8px;right:8px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);color:#eaf4ff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;">
+          ✕
+        </div>
+      </div>
+    `;
+
+    const close = () => ov.remove();
+
+    ov.addEventListener('click', e => {
+      if (e.target.id === 'camWinClose' || e.target === ov) {
+        close();
+      }
+    });
+
+    const body = ov.querySelector('#camWinBody');
+
+    if (go2rtcUrl) {
+      body.innerHTML = `
+        <iframe src="${esc(go2rtcUrl)}"
+                allowfullscreen
+                style="width:100%;height:100%;border:none;">
+        </iframe>`;
+    } else {
+      const img = document.createElement('img');
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;background:#000;';
+      body.appendChild(img);
+      this._resolveCameraStream(entityId, true).then(url => { if (url) img.src = url; });
+    }
+
+    document.body.appendChild(ov);
   }
 
   _fireMoreInfo(entityId) {
