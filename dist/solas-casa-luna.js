@@ -1,4 +1,4 @@
-// v2.1.94 stable · build no.101
+// v2.1.95 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.94';
+const VERSION = '2.1.95';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1110,7 +1110,12 @@ async _checkHikvisionEvents() {
 
       if (key === "line") {
         this._speakAlert("Line crossing detected at the Front Gate.");
-        this._openCameraFullscreen("camera.front_gate", "Front Gate", "sec_cam1");
+
+        // ⭐ Open ONLY sec_cam1 in the normal camera window (no grid, no fullscreen)
+        this._detailEntity = "sec_cam1";
+        this._cameraActive = true;
+        this._activeView = "camera";
+        this._renderDetail();
       }
 
       if (key === "field") {
