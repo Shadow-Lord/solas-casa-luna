@@ -1,4 +1,4 @@
-// v2.1.99 stable · build no.101
+// v2.2.00 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.99';
+const VERSION = '2.2.00';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1103,7 +1103,7 @@ _cameraMap() {
 
   for (let n = 1; n <= 16; n++) {
     const stream = this.config[`sec_cam${n}`];
-    if (!stream) continue; // camera not used
+    if (!stream) continue;
 
     cams.push({
       stream,
@@ -1111,7 +1111,7 @@ _cameraMap() {
       line: this.config[`sec_cam${n}_line`] || null,
       motion: this.config[`sec_cam${n}_motion`] || null,
       field: this.config[`sec_cam${n}_field`] || null,
-      classify: this.config[`sec_cam${n}_classify`] || false
+      classify: this.config[`sec_cam${n}_classify`] === 'true'
     });
   }
 
@@ -6442,7 +6442,7 @@ class CasaLunaEditor extends HTMLElement {
           picker(`sec_cam${n}_field`, `Camera ${n} field sensor`, false),
 
           // ⭐ NEW: classification toggle
-          checkbox(`sec_cam${n}_classify`, `Camera ${n} supports Human/Vehicle classification`, false),
+          textField(`sec_cam${n}_classify`, `Camera ${n} classification (true/false)`, 'false'),
         ];
       }).flat(),
     ]));
