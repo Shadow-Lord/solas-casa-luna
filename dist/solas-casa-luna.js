@@ -1,4 +1,4 @@
-// v2.1.98 stable · build no.101
+// v2.1.99 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.1.98';
+const VERSION = '2.1.99';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1098,37 +1098,89 @@ _getStateCached(entityId) {
   return this._allStates?.find(e => e.entity_id === entityId)?.state || "off";
 }
 
+_cameraMap() {
+  const cams = [];
+
+  for (let n = 1; n <= 16; n++) {
+    const stream = this.config[`sec_cam${n}`];
+    if (!stream) continue; // camera not used
+
+    cams.push({
+      stream,
+      name: this.config[`sec_cam${n}_name`] || `Camera ${n}`,
+      line: this.config[`sec_cam${n}_line`] || null,
+      motion: this.config[`sec_cam${n}_motion`] || null,
+      field: this.config[`sec_cam${n}_field`] || null,
+      classify: this.config[`sec_cam${n}_classify`] || false
+    });
+  }
+
+  return cams;
+}
+
+_getObjectType(entityId) {
+  const a = this._attr(entityId) || {};
+
+  if (a.object_type) return a.object_type;
+  if (a.target) return a.target;
+  if (a.object) return a.object;
+
+  if (a.human === "on") return "human";
+  if (a.vehicle === "on") return "vehicle";
+
+  return null;
+}
+
 async _checkHikvisionEvents() {
-  const events = {
-    line: this._getStateCached("binary_sensor.front_gate_line_crossing"),
-    field: this._getStateCached("binary_sensor.front_gate_field_detection"),
-    motion: this._getStateCached("binary_sensor.front_gate_motion")
-  };
+  const cams = this._cameraMap();
 
-  for (const [key, state] of Object.entries(events)) {
-    if (state === "on" && this._lastEventStates[key] !== "on") {
+  for (const cam of cams) {
 
-      if (key === "line") {
-        this._speakAlert("Line crossing detected at the Front Gate.");
+    // --- LINE CROSSING ---
+    if (cam.line) {
+      const state = this._getStateCached(cam.line);
 
-        // ⭐ Open ONLY sec_cam1 in a normal window (no fullscreen)
-        this._openCameraWindow(
-          null,
-          "Front Gate",
-          this.config.camera_stream_base + "/stream.html?src=sec_cam1&mode=mse"
-        );
+      if (state === "on" && this._lastEventStates[cam.line] !== "on") {
+
+        let obj = null;
+        if (cam.classify) obj = this._getObjectType(cam.line);
+
+        if (obj === "human") {
+          this._speakAlert(`Human detected at ${cam.name}.`);
+        } else if (obj === "vehicle") {
+          this._speakAlert(`Vehicle detected at ${cam.name}.`);
+        } else {
+          this._speakAlert(`Line crossing detected at ${cam.name}.`);
+        }
+
+        const url = `${this.config.camera_stream_base}/stream.html?src=${cam.stream}&mode=mse`;
+        this._openCameraWindow(null, cam.name, url);
       }
 
-      if (key === "field") {
-        this._speakAlert("Field detection event at the Front Gate.");
-      }
-
-      if (key === "motion") {
-        this._speakAlert("Motion detected at the Front Gate.");
-      }
+      this._lastEventStates[cam.line] = state;
     }
 
-    this._lastEventStates[key] = state;
+    // --- FIELD DETECTION ---
+    if (cam.field) {
+      const state = this._getStateCached(cam.field);
+
+      if (state === "on" && this._lastEventStates[cam.field] !== "on") {
+        this._speakAlert(`Field detection event at ${cam.name}.`);
+      }
+
+      this._lastEventStates[cam.field] = state;
+    }
+
+    // --- MOTION DETECTION ---
+    if (cam.motion) {
+      const state = this._getStateCached(cam.motion);
+
+      if (state === "on" && this._lastEventStates[cam.motion] !== "on") {
+        this._speakAlert(`Motion detected at ${cam.name}.`);
+      }
+
+      this._lastEventStates[cam.motion] = state;
+    }
   }
 }
 
@@ -6375,14 +6427,22 @@ class CasaLunaEditor extends HTMLElement {
     /* ── Per-view entity configuration (every field from the 9 nav panels) ── */
     shell.appendChild(section('nav_cameras', '📷', 'Cameras', [
       info('Pick camera entities. Add as many as you want — the dashboard auto-detects sec_cam* entries and builds a grid automatically.'),
-      textField('camera_stream_base', 'go2rtc base URL (optional — for lower-latency WebRTC)', 'http://192.168.3.109:1984'),
+      textField('camera_stream_base', 'go2rtc base URL (optional — for lower-latency WebRTC)', 'http://192.168.3.43:1984'),
 
-      // Auto-generate camera pickers + name fields for sec_cam1..sec_cam16
+      // Auto-generate camera config fields for sec_cam1..sec_cam16
       ...Array.from({ length: 16 }, (_, i) => {
         const n = i + 1;
         return [
           picker(`sec_cam${n}`, `Camera ${n}`, true),
           textField(`sec_cam${n}_name`, `Camera ${n} name`, ''),
+
+          // ⭐ NEW: event sensors
+          picker(`sec_cam${n}_line`, `Camera ${n} line-cross sensor`, false),
+          picker(`sec_cam${n}_motion`, `Camera ${n} motion sensor`, false),
+          picker(`sec_cam${n}_field`, `Camera ${n} field sensor`, false),
+
+          // ⭐ NEW: classification toggle
+          checkbox(`sec_cam${n}_classify`, `Camera ${n} supports Human/Vehicle classification`, false),
         ];
       }).flat(),
     ]));
