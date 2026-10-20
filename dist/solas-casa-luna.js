@@ -1,4 +1,4 @@
-// v2.2.00 stable · build no.101
+// v2.2.01 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.2.00';
+const VERSION = '2.2.01';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -3552,7 +3552,7 @@ runPricing();
 
     // Auto-discover only camera picker keys (not *_name keys)
     const camList = Object.keys(c)
-      .filter(k => k.startsWith('sec_cam') && !k.endsWith('_name'))
+      .filter(k => /^sec_cam\d+$/.test(k))
       .map(k => {
         const id = c[k];
         if (!id || id.trim() === '') return null;  // skip empty pickers
