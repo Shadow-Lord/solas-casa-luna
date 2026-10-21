@@ -1,4 +1,4 @@
-// v2.2.07 stable · build no.101
+// v2.2.08 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.2.07';
+const VERSION = '2.2.08';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -932,8 +932,9 @@ class CasaLuna extends HTMLElement {
   }
 
   set hass(hass) {
-  console.log("DEBUG refreshStates =", typeof this._refreshStates);
     this._hass = hass;
+    // ⭐ Refresh states and event entities immediately
+    this._refreshStates();
     if (!this.config) return;
     if (this.config._demo_mode) this._wrapDemoServices();
     const freshBuild = !this._built && !this._locked;
@@ -1099,13 +1100,23 @@ _speakAlert(text) {
 }
 
 _eventState(id) {
-  // Try normal states first
-  if (this._hass.states[id]) return this._hass.states[id].state;
-
-  // Try cached event entities
+  // Try event entities
   if (this._allEvents) {
     const ev = this._allEvents.find(e => e.entity_id === id);
-    if (ev) return ev.state;
+    if (ev) {
+      const a = ev.attributes || {};
+
+      // Hikvision classification lives here
+      if (a.object_type) return a.object_type;
+      if (a.event_type) return a.event_type;
+      if (a.target) return a.target;
+
+      if (a.human === "on") return "human";
+      if (a.vehicle === "on") return "vehicle";
+      if (a.pet === "on") return "pet";
+
+      return null;
+    }
   }
 
   return null;
@@ -1114,12 +1125,12 @@ _eventState(id) {
 async _refreshEvents() {
   if (!this._hass) return;
 
-  // Home Assistant stores event entities in the same list as states
-  // but they have domain "event" instead of "binary_sensor" or "sensor".
-  const all = await this._hass.callWS({ type: "get_states" });
+  // Fetch all event entities from HA
+  const events = await this._hass.callWS({ type: "event/list" });
 
-  // Filter only event.* entities
-  this._allEvents = all.filter(e => e.entity_id.startsWith("event."));
+  this._allEvents = events;
+
+  console.log("EVENT ENTITIES:", this._allEvents.map(e => e.entity_id));
 }
 
 async _refreshStates() {
