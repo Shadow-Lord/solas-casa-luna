@@ -1,4 +1,4 @@
-// v2.2.04 stable · build no.101
+// v2.2.05 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.2.04';
+const VERSION = '2.2.05';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1119,6 +1119,7 @@ _cameraMap() {
       line: this.config[`sec_cam${n}_line`] || null,
       motion: this.config[`sec_cam${n}_motion`] || null,
       field: this.config[`sec_cam${n}_field`] || null,
+      event: this.config[`sec_cam${n}_event`] || null,
       classify: this.config[`sec_cam${n}_classify`] === 'true'
     });
   }
@@ -1160,12 +1161,14 @@ console.log("HA states lookup =", this._hass.states[cam.line]);
 
     console.log("Hikvision event attributes:", cam.line, this._attr(cam.line));
         let obj = null;
-        if (cam.classify) obj = this._getObjectType(cam.line);
+        if (cam.event) obj = this._st(cam.event);   // ⭐ human / vehicle / pet / triggered
 
         if (obj === "human") {
           this._speakAlert(`Human detected at ${cam.name}.`);
         } else if (obj === "vehicle") {
           this._speakAlert(`Vehicle detected at ${cam.name}.`);
+        } else if (obj === "pet") {
+          this._speakAlert(`Pet detected at ${cam.name}.`);
         } else {
           this._speakAlert(`Line crossing detected at ${cam.name}.`);
         }
@@ -6457,6 +6460,7 @@ class CasaLunaEditor extends HTMLElement {
           picker(`sec_cam${n}_line`, `Camera ${n} line-cross sensor`, false),
           picker(`sec_cam${n}_motion`, `Camera ${n} motion sensor`, false),
           picker(`sec_cam${n}_field`, `Camera ${n} field sensor`, false),
+          picker(`sec_cam${n}_event`, `Camera ${n} event classifier`, false),
 
           // ⭐ NEW: classification toggle
           textField(`sec_cam${n}_classify`, `Camera ${n} classification (true/false)`, 'false'),
