@@ -1,4 +1,4 @@
-// v2.2.05 stable · build no.101
+// v2.2.06 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.2.05';
+const VERSION = '2.2.06';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1097,9 +1097,28 @@ _speakAlert(text) {
   }
 }
 
-async _refreshStates() {
+_eventState(id) {
+  // Try normal states first
+  if (this._hass.states[id]) return this._hass.states[id].state;
+
+  // Try cached event entities
+  if (this._allEvents) {
+    const ev = this._allEvents.find(e => e.entity_id === id);
+    if (ev) return ev.state;
+  }
+
+  return null;
+}
+
+async _refreshEvents() {
   if (!this._hass) return;
-  this._allStates = await this._hass.callWS({ type: "get_states" });
+
+  // Home Assistant stores event entities in the same list as states
+  // but they have domain "event" instead of "binary_sensor" or "sensor".
+  const all = await this._hass.callWS({ type: "get_states" });
+
+  // Filter only event.* entities
+  this._allEvents = all.filter(e => e.entity_id.startsWith("event."));
 }
 
 _getStateCached(entityId) {
@@ -1161,7 +1180,7 @@ console.log("HA states lookup =", this._hass.states[cam.line]);
 
     console.log("Hikvision event attributes:", cam.line, this._attr(cam.line));
         let obj = null;
-        if (cam.event) obj = this._st(cam.event);   // ⭐ human / vehicle / pet / triggered
+        if (cam.event) obj = this._eventState(cam.event);   // ⭐ human / vehicle / pet / triggered
 
         if (obj === "human") {
           this._speakAlert(`Human detected at ${cam.name}.`);
