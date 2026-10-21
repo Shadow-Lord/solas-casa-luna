@@ -1,4 +1,4 @@
-// v2.2.03 stable · build no.101
+// v2.2.04 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.2.03';
+const VERSION = '2.2.04';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1006,7 +1006,15 @@ class CasaLuna extends HTMLElement {
   }
   _st(id)  { const s = this._stateObj(id); return s ? s.state : null; }
   _num(id, d = 0) { const v = parseFloat(this._st(id)); return Number.isFinite(v) ? v : d; }
-  _attr(id, a) { return this._stateObj(id)?.attributes?.[a]; }
+  _attr(id, a = null) {
+    const st = this._stateObj(id);
+    if (!st) return undefined;
+
+    // If no attribute name is given, return the full attributes object
+    if (a === null) return st.attributes || {};
+
+    return st.attributes ? st.attributes[a] : undefined;
+  }
   /* normalize a power-type entity reading to WATTS regardless of whether the
      entity itself reports W or kW (checked via its own unit_of_measurement).
      Defaults to assuming W when no unit is declared, matching GoodWe/JK norms
@@ -1142,6 +1150,11 @@ async _checkHikvisionEvents() {
 
       if (state === "on" && this._lastEventStates[cam.line] !== "on") {
 // ⭐ DEBUG: See exactly what HA is passing
+console.log("DEBUG _attr raw:", cam.line, this._hass.states[cam.line]);
+console.log("DEBUG _attr attributes:", this._hass.states[cam.line]?.attributes);
+console.log("DEBUG _attr via helper:", this._attr(cam.line));
+console.log("DEBUG event_data:", this._attr(cam.line, 'event_data'));
+
 console.log("cam.line =", cam.line);
 console.log("HA states lookup =", this._hass.states[cam.line]);
 
