@@ -1,4 +1,4 @@
-// v2.2.06 stable · build no.101
+// v2.2.07 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.2.06';
+const VERSION = '2.2.07';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -932,6 +932,7 @@ class CasaLuna extends HTMLElement {
   }
 
   set hass(hass) {
+  console.log("DEBUG refreshStates =", typeof this._refreshStates);
     this._hass = hass;
     if (!this.config) return;
     if (this.config._demo_mode) this._wrapDemoServices();
@@ -1119,6 +1120,12 @@ async _refreshEvents() {
 
   // Filter only event.* entities
   this._allEvents = all.filter(e => e.entity_id.startsWith("event."));
+}
+
+async _refreshStates() {
+  if (!this._hass) return;
+  this._allStates = await this._hass.callWS({ type: "get_states" });
+  await this._refreshEvents();   // ⭐ NEW
 }
 
 _getStateCached(entityId) {
