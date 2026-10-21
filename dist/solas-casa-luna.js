@@ -1,4 +1,4 @@
-// v2.2.01 stable · build no.101
+// v2.2.02 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.2.01';
+const VERSION = '2.2.02';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1141,7 +1141,8 @@ async _checkHikvisionEvents() {
       const state = this._getStateCached(cam.line);
 
       if (state === "on" && this._lastEventStates[cam.line] !== "on") {
-
+// ⭐ DEBUG: See exactly what HA is passing
+    console.log("Hikvision event attributes:", cam.line, this._attr(cam.line));
         let obj = null;
         if (cam.classify) obj = this._getObjectType(cam.line);
 
