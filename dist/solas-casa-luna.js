@@ -1,4 +1,4 @@
-// v2.2.11 stable · build no.101
+// v2.2.12 stable · build no.101
 /* ════════════════════════════════════════════════════════════════════
    solas-casa-luna.js — Solas Casa Luna Edition · by The Khan
    Custom element: <solas-casa-luna>  (renamed from khan-skycard to avoid
@@ -13,7 +13,7 @@
 
 (() => {
 'use strict';
-const VERSION = '2.2.11';
+const VERSION = '2.2.12';
 const VB_W = 1500, VB_H = 1000;
 
 /* ── i18n: card's own captions. Keyed by the English string; English is the
@@ -1190,7 +1190,7 @@ async _checkHikvisionEvents() {
         if (cam.event) obj = this._eventState(cam.event);   // ⭐ human / vehicle / pet / triggered
 
         if (obj === "human") {
-          this._speakAlert(`Human detected at ${cam.name}.`);
+          this._speakAlert(`Person detected at ${cam.name}.`);
         } else if (obj === "vehicle") {
           this._speakAlert(`Vehicle detected at ${cam.name}.`);
         } else if (obj === "pet") {
@@ -4020,16 +4020,46 @@ runPricing();
     ov.requestFullscreen?.();
   }
 
-  //Opens Camera Window for when Hikvision is Triggered
+  // Opens Camera Window for when Hikvision is Triggered
   _openCameraWindow(entityId, label, go2rtcUrl) {
+
+    // ⭐ If a window already exists, update it instead of creating a new one
+    if (this._cameraWindow && document.body.contains(this._cameraWindow)) {
+      const body = this._cameraWindow.querySelector('#camWinBody');
+      const title = this._cameraWindow.querySelector('#camWinTitle');
+
+      // Update title
+      if (title) title.textContent = label;
+
+      // Update iframe/image
+      if (go2rtcUrl) {
+        body.innerHTML = `
+          <iframe src="${esc(go2rtcUrl)}"
+                  allowfullscreen
+                  style="width:100%;height:100%;border:none;">
+          </iframe>`;
+      } else {
+        const img = document.createElement('img');
+        img.style.cssText = 'width:100%;height:100%;object-fit:contain;background:#000;';
+        body.innerHTML = '';
+        body.appendChild(img);
+        this._resolveCameraStream(entityId, true).then(url => { if (url) img.src = url; });
+      }
+
+      return; // ⭐ Reuse existing window
+    }
+
+    // ⭐ Create new window only if none exists
     const ov = document.createElement('div');
+    this._cameraWindow = ov; // store reference
+
     ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;';
 
     ov.innerHTML = `
       <div id="camWinContainer" style="position:relative;width:100vw;height:100vh;background:#000;overflow:hidden;">
         <div id="camWinBody" style="width:100%;height:100%;"></div>
 
-        <div style="position:absolute;top:10px;left:14px;font-size:18px;font-weight:700;color:#eaf4ff;text-shadow:0 1px 4px #000;">
+        <div id="camWinTitle" style="position:absolute;top:10px;left:14px;font-size:18px;font-weight:700;color:#eaf4ff;text-shadow:0 1px 4px #000;">
           ${esc(label)}
         </div>
 
@@ -4039,10 +4069,14 @@ runPricing();
       </div>
     `;
 
-    const close = () => ov.remove();
+    const close = () => {
+      ov.remove();
+      this._cameraWindow = null; // ⭐ allow new window later
+    };
 
-    // ⭐ NEW: clicking ANYWHERE closes the window
-    ov.addEventListener('click', () => close());
+    ov.addEventListener('click', e => {
+      if (e.target.id === 'camWinClose' || e.target === ov) close();
+    });
 
     const body = ov.querySelector('#camWinBody');
 
